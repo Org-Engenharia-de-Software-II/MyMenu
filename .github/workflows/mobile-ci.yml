@@ -9,7 +9,7 @@ on:
       - 'mobile/**'
   pull_request:
     branches:
-      - main
+      - master
     paths:
       - 'mobile/**'
 
