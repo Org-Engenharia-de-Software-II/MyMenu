@@ -48,5 +48,5 @@ jobs:
         run: npx eslint .
 
       - name: Build on EAS (Android & iOS)
-        if: github.event_name == 'push'
+        if: github.event_name == 'workflow_dispatch'
         run: eas build --platform all --profile preview --non-interactive
