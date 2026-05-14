@@ -4,8 +4,8 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components/native';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { appTheme } from '@/theme/appTheme';
+import { useColorScheme } from '@/app/hooks/use-color-scheme';
+import { appTheme } from '@/app/theme/appTheme';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
