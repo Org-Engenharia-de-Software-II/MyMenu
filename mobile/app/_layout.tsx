@@ -13,10 +13,10 @@ export default function RootLayout() {
   return (
     <StyledThemeProvider theme={appTheme}>
       <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        <Stack screenOptions={{animation: 'fade_from_bottom'}}>
+          <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade_from_bottom' }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade_from_bottom' }} />
+          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal', animation: 'fade_from_bottom' }} />
         </Stack>
         <StatusBar style="light" />
       </NavigationThemeProvider>

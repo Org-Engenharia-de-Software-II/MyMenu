@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { Animated, Easing, StyleSheet, View } from 'react-native';
 
 import { OnboardingScreen } from '@/screens/OnboardingScreen';
 import { SignUpScreen } from '@/screens/SignUpScreen';
@@ -6,21 +7,116 @@ import { WelcomeScreen } from '@/screens/WelcomeScreen';
 
 type FlowStep = 'welcome' | 'signup' | 'onboarding';
 
+const flowOrder: FlowStep[] = ['welcome', 'signup', 'onboarding'];
+
 export function AppFlowScreen() {
   const [step, setStep] = useState<FlowStep>('welcome');
+  const [transition, setTransition] = useState<{
+    from: FlowStep;
+    to: FlowStep;
+    direction: 1 | -1;
+  } | null>(null);
+  const progress = useRef(new Animated.Value(0)).current;
+  const isTransitioning = useRef(false);
 
-  if (step === 'signup') {
-    return <SignUpScreen onSubmit={() => setStep('onboarding')} />;
-  }
+  const animateTo = (nextStep: FlowStep) => {
+    if (isTransitioning.current || nextStep === step) {
+      return;
+    }
 
-  if (step === 'onboarding') {
-    return <OnboardingScreen onFinish={() => setStep('welcome')} />;
-  }
+    const fromIndex = flowOrder.indexOf(step);
+    const toIndex = flowOrder.indexOf(nextStep);
+    const direction: 1 | -1 = toIndex > fromIndex ? 1 : -1;
+
+    isTransitioning.current = true;
+    setTransition({ from: step, to: nextStep, direction });
+    progress.setValue(0);
+
+    Animated.timing(progress, {
+      toValue: 1,
+      duration: 240,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) {
+        setStep(nextStep);
+        setTransition(null);
+      }
+
+      isTransitioning.current = false;
+    });
+  };
+
+  const renderStep = (currentStep: FlowStep) => {
+    if (currentStep === 'signup') {
+      return <SignUpScreen onSubmit={() => animateTo('onboarding')} />;
+    }
+
+    if (currentStep === 'onboarding') {
+      return <OnboardingScreen onFinish={() => animateTo('welcome')} />;
+    }
+
+    return <WelcomeScreen onPressEnter={() => animateTo('onboarding')} onPressSignUp={() => animateTo('signup')} />;
+  };
 
   return (
-    <WelcomeScreen
-      onPressEnter={() => setStep('onboarding')}
-      onPressSignUp={() => setStep('signup')}
-    />
+    <View style={styles.container}>
+      {transition && (
+        <Animated.View
+          style={[
+            styles.screen,
+            styles.absoluteFill,
+            {
+              opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+              transform: [
+                {
+                  translateX: progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, -transition.direction * 24],
+                  }),
+                },
+              ],
+            },
+          ]}>
+          {renderStep(transition.from)}
+        </Animated.View>
+      )}
+
+      <Animated.View
+        style={[
+          styles.screen,
+          styles.absoluteFill,
+          transition
+            ? {
+                opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
+                transform: [
+                  {
+                    translateX: progress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [transition.direction * 24, 0],
+                    }),
+                  },
+                ],
+              }
+            : {
+                opacity: 1,
+                transform: [{ translateX: 0 }],
+              },
+        ]}>
+        {renderStep(transition ? transition.to : step)}
+      </Animated.View>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  screen: {
+    flex: 1,
+  },
+  absoluteFill: {
+    ...StyleSheet.absoluteFillObject,
+  },
+});

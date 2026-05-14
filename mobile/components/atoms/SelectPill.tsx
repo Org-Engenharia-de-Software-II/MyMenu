@@ -7,8 +7,8 @@ type SelectPillProps = {
 };
 
 const PillButton = sc.Pressable<{ $selected: boolean }>`
-  min-width: 48%;
-  padding: 10px 14px;
+  min-width: 45%;
+  padding: 10px 8px;
   border-radius: ${({ theme }) => theme.radius.pill}px;
   align-items: center;
   justify-content: center;

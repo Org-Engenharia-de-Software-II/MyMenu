@@ -17,7 +17,7 @@ const Content = sc.View`
   flex: 1;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  padding: 50px;
 `;
 
 const LogoContainer = sc.View`
