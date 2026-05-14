@@ -74,6 +74,10 @@ export function FridgeScreen({ onAddProduct }: FridgeScreenProps) {
     { id: 'm2', name: 'Costela bovina moída', quantity: '2 kg', expiresIn: 'vemce em: 1 semana' },
   ]);
 
+  const categorias = ["Congelados", "Padaria", "Bebidas", "Higiene Pessoal", "Limpeza", "Outros", "Frios e Laticínios",
+    "Laticínios", "Mercearia", "Açougue", "Hortifruti"
+  ];
+
   const removeFruit = (id: string) => setFruits((prev) => prev.filter((item) => item.id !== id));
   const removeMeat = (id: string) => setMeats((prev) => prev.filter((item) => item.id !== id));
 
