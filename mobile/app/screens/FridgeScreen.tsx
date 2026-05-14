@@ -75,8 +75,7 @@ export function FridgeScreen({ onAddProduct }: FridgeScreenProps) {
   ]);
 
   const categorias = ["Congelados", "Padaria", "Bebidas", "Higiene Pessoal", "Limpeza", "Outros", "Frios e Laticínios",
-    "Laticínios", "Mercearia", "Açougue", "Hortifruti"
-  ];
+    "Laticínios", "Mercearia", "Açougue", "Hortifruti"];
 
   const removeFruit = (id: string) => setFruits((prev) => prev.filter((item) => item.id !== id));
   const removeMeat = (id: string) => setMeats((prev) => prev.filter((item) => item.id !== id));
@@ -87,7 +86,7 @@ export function FridgeScreen({ onAddProduct }: FridgeScreenProps) {
         <Content>
           <Card>
             <Header>
-              <Title>Minha geladeira</Title>
+              <Title>Minha Geladeira</Title>
               <AddButton onPress={onAddProduct}>
                 <Icon name="plus" size={20} color="#FFFFFF" />
               </AddButton>
