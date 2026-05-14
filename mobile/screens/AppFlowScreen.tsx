@@ -4,10 +4,13 @@ import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { OnboardingScreen } from '@/screens/OnboardingScreen';
 import { SignUpScreen } from '@/screens/SignUpScreen';
 import { WelcomeScreen } from '@/screens/WelcomeScreen';
+import { DashboardScreen } from './DashboardScreen';
+import { RecipeDiscoveryScreen } from './RecipeDiscoveryScreen';
+import { ShoppingListScreen } from './ShoppingListScreen';
 
-type FlowStep = 'welcome' | 'signup' | 'onboarding';
+type FlowStep = 'welcome' | 'signup' | 'onboarding' | 'dashboard' | 'shopping-list' | 'recipes';
 
-const flowOrder: FlowStep[] = ['welcome', 'signup', 'onboarding'];
+const flowOrder: FlowStep[] = ['welcome', 'signup', 'onboarding', 'dashboard', 'shopping-list', 'recipes'];
 
 export function AppFlowScreen() {
   const [step, setStep] = useState<FlowStep>('welcome');
@@ -53,7 +56,20 @@ export function AppFlowScreen() {
     }
 
     if (currentStep === 'onboarding') {
-      return <OnboardingScreen onFinish={() => animateTo('welcome')} />;
+      return <OnboardingScreen onFinish={() => animateTo('dashboard')} />;
+    }
+
+    if (currentStep === 'dashboard') {
+      return <DashboardScreen onOpenShoppingList={() => { animateTo('shopping-list') }} 
+      onOpenRecipes={() => { animateTo('recipes') }} />;
+    }
+
+    if(currentStep === 'shopping-list') {
+      return <ShoppingListScreen onBack={() => animateTo('dashboard')} onAddProduct={() => {}} />
+    }
+
+    if(currentStep === 'recipes') {
+      return <RecipeDiscoveryScreen onBack={() => animateTo('dashboard')} />
     }
 
     return <WelcomeScreen onPressEnter={() => animateTo('onboarding')} onPressSignUp={() => animateTo('signup')} />;
