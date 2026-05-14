@@ -59,51 +59,48 @@ export function AppFlowScreen() {
     return <WelcomeScreen onPressEnter={() => animateTo('onboarding')} onPressSignUp={() => animateTo('signup')} />;
   };
 
+  if (!transition) {
+    return <View style={styles.container}>{renderStep(step)}</View>;
+  }
+
   return (
     <View style={styles.container}>
-      {transition && (
-        <Animated.View
-          style={[
-            styles.screen,
-            styles.absoluteFill,
-            {
-              opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
-              transform: [
-                {
-                  translateX: progress.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, -transition.direction * 24],
-                  }),
-                },
-              ],
-            },
-          ]}>
-          {renderStep(transition.from)}
-        </Animated.View>
-      )}
+      <Animated.View
+        style={[
+          styles.screen,
+          styles.absoluteFill,
+          {
+            opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+            transform: [
+              {
+                translateX: progress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, -transition.direction * 24],
+                }),
+              },
+            ],
+          },
+        ]}>
+        {renderStep(transition.from)}
+      </Animated.View>
 
       <Animated.View
         style={[
           styles.screen,
           styles.absoluteFill,
-          transition
-            ? {
-                opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
-                transform: [
-                  {
-                    translateX: progress.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [transition.direction * 24, 0],
-                    }),
-                  },
-                ],
-              }
-            : {
-                opacity: 1,
-                transform: [{ translateX: 0 }],
+          {
+            opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
+            transform: [
+              {
+                translateX: progress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [transition.direction * 24, 0],
+                }),
               },
+            ],
+          },
         ]}>
-        {renderStep(transition ? transition.to : step)}
+        {renderStep(transition.to)}
       </Animated.View>
     </View>
   );
