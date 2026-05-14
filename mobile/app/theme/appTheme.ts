@@ -1,0 +1,46 @@
+export const appTheme = {
+  colors: {
+    background: '#121212',
+    surface: '#1E1E1E',
+    surfaceAlt: '#2A2A2A',
+    inputBg: '#ECECEC',
+    coral: '#FF6B6B',
+    white: '#FFFFFF',
+    textPrimary: '#F5F5F5',
+    textSecondary: '#B5B5B5',
+    textDark: '#1A1A1A',
+    textMuted: '#B5B5B5',
+    border: '#383838',
+    borderSoft: '#3D3D3D',
+    buttonSecondary: '#F6C6CC',
+    backgroundLightShape: '#242424',
+    backgroundDarkShape: '#181818',
+    success: '#39D98A',
+    overlay: 'rgba(0, 0, 0, 0.45)',
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 24,
+    xxl: 32,
+  },
+  radius: {
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 20,
+    pill: 999,
+  },
+  typography: {
+    title: 32,
+    subtitle: 22,
+    label: 16,
+    body: 14,
+    caption: 12,
+    button: 30,
+  },
+} as const;
+
+export type AppTheme = typeof appTheme;

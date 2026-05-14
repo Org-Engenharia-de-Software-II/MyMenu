@@ -4,8 +4,8 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { ThemeProvider as StyledThemeProvider } from 'styled-components/native';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { appTheme } from '@/theme/appTheme';
+import { useColorScheme } from '@/app/hooks/use-color-scheme';
+import { appTheme } from '@/app/theme/appTheme';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -13,10 +13,10 @@ export default function RootLayout() {
   return (
     <StyledThemeProvider theme={appTheme}>
       <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        <Stack screenOptions={{animation: 'fade_from_bottom'}}>
+          <Stack.Screen name="index" options={{ headerShown: false, animation: 'fade_from_bottom' }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade_from_bottom' }} />
+          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal', animation: 'fade_from_bottom' }} />
         </Stack>
         <StatusBar style="light" />
       </NavigationThemeProvider>
