@@ -1,12 +1,16 @@
 package myMenu.backend.demo.model;
 
 import jakarta.persistence.*;
+import lombok.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "cardapio_semanal")
+@Getter
+@Setter
+@NoArgsConstructor
 public class CardapioSemanal {
 
     @Id
@@ -14,73 +18,35 @@ public class CardapioSemanal {
     private Long id;
 
     @Column(nullable = false)
-    private LocalDate dataInicio;
+    private LocalDate dataInicio = LocalDate.now();
 
     @Column(nullable = false)
-    private LocalDate dataFim;
+    private LocalDate dataFim = LocalDate.now().plusDays(7);
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
-    @ManyToMany
-    @JoinTable(
-        name = "cardapio_receitas",
-        joinColumns = @JoinColumn(name = "cardapio_id"),
-        inverseJoinColumns = @JoinColumn(name = "receita_id")
-    )
-    private List<Receita> receitas = new ArrayList<>();
-
-    public CardapioSemanal() {
-        this.dataInicio = LocalDate.now();
-        this.dataFim = LocalDate.now().plusDays(7);
-    }
+    @OneToMany(mappedBy = "cardapio", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ItemCardapio> itensCardapio = new ArrayList<>();
 
     public void adicionarReceita(Receita receita, String dia, String refeicao) {
-        this.receitas.add(receita);
+        ItemCardapio item = new ItemCardapio(this, receita, dia, refeicao);
+        this.itensCardapio.add(item);
     }
 
-    public void removerReceita(Receita receita) {
-        this.receitas.remove(receita);
+    public void removerReceitaTotalmente(Receita receita) {
+        this.itensCardapio.removeIf(item -> 
+            item.getReceita().getId().equals(receita.getId())
+        );
     }
 
-    public Long getId() { 
-        return id; 
+    public void removerReceitaEspecifica(Receita receita, String dia, String refeicao) {
+        this.itensCardapio.removeIf(item -> 
+            item.getReceita().getId().equals(receita.getId()) &&
+            item.getDiaDaSemana().equalsIgnoreCase(dia) &&
+            item.getTipoRefeicao().equalsIgnoreCase(refeicao)
+        );
     }
-    
-    public void setId(Long id) { 
-        this.id = id; 
-    }
-    
-    public LocalDate getDataInicio() { 
-        return dataInicio; 
-    }
-    
-    public void setDataInicio(LocalDate dataInicio) { 
-        this.dataInicio = dataInicio; 
-    }
-    
-    public LocalDate getDataFim() { 
-        return dataFim; 
-    }
-    
-    public void setDataFim(LocalDate dataFim) { 
-        this.dataFim = dataFim; 
-    }
-    
-    public Usuario getUsuario() { 
-        return usuario; 
-    }
-    
-    public void setUsuario(Usuario usuario) { 
-        this.usuario = usuario; 
-    }
-    
-    public List<Receita> getReceitas() { 
-        return receitas; 
-    }
-    
-    public void setReceitas(List<Receita> receitas) { 
-        this.receitas = receitas; 
-    }
+
 }
