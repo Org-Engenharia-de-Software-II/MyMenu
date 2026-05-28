@@ -24,8 +24,8 @@ jobs:
         image: postgres:15-alpine
         env:
           POSTGRES_DB: mymenu_db     
-          POSTGRES_USER: postgres     
-          POSTGRES_PASSWORD: 1234     
+          POSTGRES_USER: mymenu_user     
+          POSTGRES_PASSWORD: mymenu_password    
         ports:
           - 5432:5432
         
