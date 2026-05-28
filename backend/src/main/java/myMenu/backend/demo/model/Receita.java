@@ -32,6 +32,14 @@ public class Receita {
     @OneToMany(mappedBy = "receita", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ItemReceita> itens = new ArrayList<>();
 
+    @Column(length = 500)
+    private String imagemUrl;
+
+    private int kcal;
+    private double proteina;
+    private double carboidrato;
+    private double gordura;
+
     public boolean verificarCompatibilidade(Geladeira geladeira, List<String> restricoes) {
         if (geladeira == null || geladeira.getItens() == null) return false;
 
