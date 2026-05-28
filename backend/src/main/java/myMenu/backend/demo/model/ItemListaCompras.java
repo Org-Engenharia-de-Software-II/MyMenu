@@ -1,9 +1,13 @@
 package myMenu.backend.demo.model;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "item_lista_compras")
+@Getter
+@Setter
+@NoArgsConstructor
 public class ItemListaCompras {
 
     @Id
@@ -11,56 +15,27 @@ public class ItemListaCompras {
     private Long id;
 
     @Column(nullable = false)
-    private String quantidade;
+    private double quantidade;
+
+    @Column(nullable = false)
+    private String unidadeMedida;
 
     @Column(nullable = false)
     private boolean comprado = false;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ingrediente_id", nullable = false)
     private Ingrediente ingrediente;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lista_id", nullable = false)
     private ListaDeCompras listaDeCompras;
 
-    public ItemListaCompras() {}
-
-    public ItemListaCompras(Ingrediente ingrediente, String quantidade, ListaDeCompras lista) {
+    public ItemListaCompras(Ingrediente ingrediente, double quantidade, String unidadeMedida, ListaDeCompras lista) {
         this.ingrediente = ingrediente;
         this.quantidade = quantidade;
+        this.unidadeMedida = unidadeMedida;
         this.listaDeCompras = lista;
     }
 
-    public Long getId() { 
-        return id; 
-    }
-    public void setId(Long id) { 
-        this.id = id; 
-    }
-    public String getQuantidade() { 
-        return quantidade; 
-    }
-
-    public void setQuantidade(String quantidade) { 
-        this.quantidade = quantidade; 
-    }
-    public boolean isComprado() { 
-        return comprado; 
-    }
-    public void setComprado(boolean comprado) { 
-        this.comprado = comprado; 
-    }
-    public Ingrediente getIngrediente() { 
-        return ingrediente; 
-    }
-    public void setIngrediente(Ingrediente ingrediente) { 
-        this.ingrediente = ingrediente; 
-    }
-    public ListaDeCompras getListaDeCompras() { 
-        return listaDeCompras; 
-    }
-    public void setListaDeCompras(ListaDeCompras listaDeCompras) { 
-        this.listaDeCompras = listaDeCompras; 
-    }
 }

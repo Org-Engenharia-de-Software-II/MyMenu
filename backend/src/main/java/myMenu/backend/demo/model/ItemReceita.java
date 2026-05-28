@@ -1,9 +1,13 @@
 package myMenu.backend.demo.model;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Table(name = "item_receita")
+@Getter
+@Setter
+@NoArgsConstructor
 public class ItemReceita {
 
     @Id
@@ -11,47 +15,24 @@ public class ItemReceita {
     private Long id;
 
     @Column(nullable = false)
-    private String quantidade;
+    private double quantidade;
 
-    @ManyToOne
+    @Column(nullable = false)
+    private String unidadeMedida;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "receita_id", nullable = false)
     private Receita receita;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ingrediente_id", nullable = false)
     private Ingrediente ingrediente;
 
-    public ItemReceita() {}
-
-    public Long getId() { 
-        return id; 
+    public ItemReceita(double quantidade, String unidadeMedida, Receita receita, Ingrediente ingrediente) {
+        this.quantidade = quantidade;
+        this.unidadeMedida = unidadeMedida;
+        this.receita = receita;
+        this.ingrediente = ingrediente;
     }
-
-    public void setId(Long id) { 
-        this.id = id; 
-    }
-
-    public String getQuantidade() { 
-        return quantidade; 
-    }
-
-    public void setQuantidade(String quantidade) { 
-        this.quantidade = quantidade; 
-    }
-
-    public Receita getReceita() { 
-        return receita; 
-    }
-
-    public void setReceita(Receita receita) { 
-        this.receita = receita; 
-    }
-
-    public Ingrediente getIngrediente() { 
-        return ingrediente; 
-    }
-
-    public void setIngrediente(Ingrediente ingrediente) { 
-        this.ingrediente = ingrediente; 
-    }
+    
 }

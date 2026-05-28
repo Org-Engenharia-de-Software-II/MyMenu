@@ -2,10 +2,15 @@ package myMenu.backend.demo.model;
 
 import jakarta.persistence.*;
 import java.util.ArrayList;
+import lombok.*;
 import java.util.List;
+import java.util.Optional;
 
 @Entity
 @Table(name = "geladeira")
+@Getter
+@Setter
+@NoArgsConstructor
 public class Geladeira {
 
     @Id
@@ -15,27 +20,24 @@ public class Geladeira {
     @OneToMany(mappedBy = "geladeira", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ItemGeladeira> itens = new ArrayList<>();
 
-    public Geladeira() {}
+    public void adicionarIngrediente(Ingrediente ingrediente, double quantidade, String unidade) {
+        Optional<ItemGeladeira> itemExistente = this.itens.stream().filter(i->i.getIngrediente().getNome().equalsIgnoreCase(ingrediente.getNome())).findFirst();
 
-    public void adicionarIngrediente(Ingrediente ingrediente, String quantidade) {
-        ItemGeladeira item = new ItemGeladeira(quantidade, this, ingrediente);
-        this.itens.add(item);
+        if(itemExistente.isPresent()){
+            ItemGeladeira item = itemExistente.get();
+            if(item.getUnidadeMedida().equalsIgnoreCase(unidade)){
+                item.setQuantidade(item.getQuantidade() + quantidade);
+            }else{
+                throw new IllegalArgumentException("Unidade de medida incompatível. Unidade certa: " + item.getUnidadeMedida());
+            }
+        }else{
+            ItemGeladeira novoItem = new ItemGeladeira(quantidade, unidade, this, ingrediente);
+            this.itens.add(novoItem);
+        }
     }
 
     public void removerIngrediente(Ingrediente ingrediente) {
         this.itens.removeIf(i -> i.getIngrediente().getNome().equalsIgnoreCase(ingrediente.getNome()));
     }
 
-    public Long getId() { 
-        return id; 
-    }
-    public void setId(Long id) { 
-        this.id = id; 
-    }
-    public List<ItemGeladeira> getItens() { 
-        return itens; 
-    }
-    public void setItens(List<ItemGeladeira> itens) { 
-        this.itens = itens; 
-    }
 }
