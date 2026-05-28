@@ -4,11 +4,13 @@ on:
   push:
     branches:
       - master
+      - murilo
     paths:
       - 'backend/**' 
   pull_request:
     branches:
       - master
+      - murilo
     paths:
       - 'backend/**'
 
