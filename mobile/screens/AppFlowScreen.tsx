@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import sc from 'styled-components/native';
 
 import { FilterBottomSheet } from '@/components/organisms/FilterBottomSheet';
@@ -29,6 +30,10 @@ const Container = sc.View`
 `;
 
 const Body = sc.View`
+  flex: 1;
+`;
+
+const AnimatedScreen = sc(Animated.View)`
   flex: 1;
 `;
 
@@ -69,50 +74,52 @@ export function AppFlowScreen() {
   return (
     <Container>
       <Body>
-        {route.screen === 'dashboard' ? (
-          <DashboardScreen
-            onOpenShoppingList={() => setRoute({ screen: 'shopping_list' })}
-            onOpenRecipes={() => {
-              setActiveTab('menu');
-              setRoute({ screen: 'weekly_menu' });
-            }}
-          />
-        ) : null}
+        <AnimatedScreen key={route.screen} entering={FadeIn.duration(220)} exiting={FadeOut.duration(160)}>
+          {route.screen === 'dashboard' ? (
+            <DashboardScreen
+              onOpenShoppingList={() => setRoute({ screen: 'shopping_list' })}
+              onOpenRecipes={() => {
+                setActiveTab('menu');
+                setRoute({ screen: 'weekly_menu' });
+              }}
+            />
+          ) : null}
 
-        {route.screen === 'shopping_list' ? (
-          <ShoppingListScreen
-            onBack={() => setRoute({ screen: 'dashboard' })}
-            onAddProduct={() => setRoute({ screen: 'add_product', target: 'shopping_list' })}
-          />
-        ) : null}
+          {route.screen === 'shopping_list' ? (
+            <ShoppingListScreen
+              onBack={() => setRoute({ screen: 'dashboard' })}
+              onAddProduct={() => setRoute({ screen: 'add_product', target: 'shopping_list' })}
+            />
+          ) : null}
 
-        {route.screen === 'weekly_menu' ? (
-          <WeeklyMenuScreen
-            onOpenRecipe={() => setRoute({ screen: 'recipe_detail' })}
-            onOpenFilters={() => setShowFilterSheet(true)}
-          />
-        ) : null}
+          {route.screen === 'weekly_menu' ? (
+            <WeeklyMenuScreen
+              onOpenRecipe={() => setRoute({ screen: 'recipe_detail' })}
+              onOpenFilters={() => setShowFilterSheet(true)}
+            />
+          ) : null}
 
-        {route.screen === 'recipes' ? (
-          <RecipeDiscoveryScreen onBack={() => setRoute({ screen: 'weekly_menu' })} />
-        ) : null}
+          {route.screen === 'recipes' ? (
+            <RecipeDiscoveryScreen onBack={() => setRoute({ screen: 'weekly_menu' })} />
+          ) : null}
 
-        {route.screen === 'recipe_detail' ? <RecipeDetailScreen onBack={() => setRoute({ screen: 'weekly_menu' })} /> : null}
+          {route.screen === 'recipe_detail' ? <RecipeDetailScreen onBack={() => setRoute({ screen: 'weekly_menu' })} /> : null}
 
-        {route.screen === 'profile' ? <ProfileScreen /> : null}
+          {route.screen === 'profile' ? <ProfileScreen /> : null}
 
-        {route.screen === 'fridge' ? (
-          <FridgeScreen onAddProduct={() => setRoute({ screen: 'add_product', target: 'fridge' })} />
-        ) : null}
+          {route.screen === 'fridge' ? (
+            <FridgeScreen onAddProduct={() => setRoute({ screen: 'add_product', target: 'fridge' })} />
+          ) : null}
 
-        {route.screen === 'add_product' ? (
-          <AddProductScreen
-            target={route.target}
-            onBack={() => setRoute(route.target === 'fridge' ? { screen: 'fridge' } : { screen: 'shopping_list' })}
-            onSaveToShoppingList={handleSaveToShoppingList}
-            onSaveToFridge={handleSaveToFridge}
-          />
-        ) : null}
+          {route.screen === 'add_product' ? (
+            <AddProductScreen
+              target={route.target}
+              onBack={() => setRoute(route.target === 'fridge' ? { screen: 'fridge' } : { screen: 'shopping_list' })}
+              onSaveToShoppingList={handleSaveToShoppingList}
+              onSaveToFridge={handleSaveToFridge}
+            />
+          ) : null}
+        </AnimatedScreen>
       </Body>
 
       <BottomNavigationBar activeTab={activeTab} onChangeTab={handleTabChange} />
