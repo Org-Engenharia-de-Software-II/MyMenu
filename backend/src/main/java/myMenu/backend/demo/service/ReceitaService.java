@@ -24,7 +24,7 @@ public class ReceitaService {
         return receitaRepository.findByNomeContainingIgnoreCase(nome);
     }
 
-    public List<Receita> buscarReceitasComIngredientesDaGeladeira(Long usuarioId) {     //Restrições??
+    public List<Receita> buscarReceitasComIngredientesDaGeladeira(Long usuarioId) {   
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
         
@@ -36,7 +36,7 @@ public class ReceitaService {
                 .collect(Collectors.toList());
     }
 
-    public List<Receita> buscarPriorizandoGeladeira(Long usuarioId) {       //So pega duas receitas?
+    public List<Receita> buscarPriorizandoGeladeira(Long usuarioId) {     
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
                 

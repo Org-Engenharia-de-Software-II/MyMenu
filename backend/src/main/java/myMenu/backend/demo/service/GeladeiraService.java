@@ -17,7 +17,7 @@ public class GeladeiraService {
     private final IngredienteRepository ingredienteRepository;
 
     @Transactional
-    public Geladeira adicionarItem(Long usuarioId, String nomeIngrediente, double quantidade, String unidade) {
+    public Geladeira adicionarItem(Long usuarioId, String nomeIngrediente, double quantidade, String unidade, String categoria, LocalDate dataValidade) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
         
@@ -26,7 +26,7 @@ public class GeladeiraService {
         Ingrediente ingrediente = ingredienteRepository.findByNomeIgnoreCase(nomeIngrediente)
                 .orElseGet(() -> ingredienteRepository.save(new Ingrediente(nomeIngrediente)));
 
-        geladeira.adicionarIngrediente(ingrediente, quantidade, unidade);
+        geladeira.adicionarIngrediente(ingrediente, quantidade, unidade, categoria, dataValidade);
 
         usuarioRepository.save(usuario);
         return geladeira;

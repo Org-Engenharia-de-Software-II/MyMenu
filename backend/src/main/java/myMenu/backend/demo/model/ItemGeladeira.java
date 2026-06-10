@@ -21,6 +21,9 @@ public class ItemGeladeira {
     @Column(nullable = false)
     private String unidadeMedida;
 
+    @Column(nullable = false)
+    private String categoria;
+
     private LocalDate dataValidade;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -31,11 +34,12 @@ public class ItemGeladeira {
     @JoinColumn(name = "ingrediente_id", nullable = false)
     private Ingrediente ingrediente;
 
-    public ItemGeladeira(double quantidade, String unidadeMedida, Geladeira geladeira, Ingrediente ingrediente) {
+    public ItemGeladeira(double quantidade, String unidadeMedida, Geladeira geladeira, Ingrediente ingrediente, String categoria) {
         this.quantidade = quantidade;
         this.unidadeMedida = unidadeMedida;
         this.geladeira = geladeira;
         this.ingrediente = ingrediente;
+        this.categoria = categoria;
     }
 
 }

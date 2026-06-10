@@ -20,18 +20,22 @@ public class Geladeira {
     @OneToMany(mappedBy = "geladeira", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ItemGeladeira> itens = new ArrayList<>();
 
-    public void adicionarIngrediente(Ingrediente ingrediente, double quantidade, String unidade) {
-        Optional<ItemGeladeira> itemExistente = this.itens.stream().filter(i->i.getIngrediente().getNome().equalsIgnoreCase(ingrediente.getNome())).findFirst();
+    public void adicionarIngrediente(Ingrediente ingrediente, double quantidade, String unidade, String categoria, LocalDate dataValidade) {
+        Optional<ItemGeladeira> itemExistente = this.itens.stream()
+            .filter(i -> i.getIngrediente().getNome().equalsIgnoreCase(ingrediente.getNome()))
+            .findFirst();
 
         if(itemExistente.isPresent()){
             ItemGeladeira item = itemExistente.get();
             if(item.getUnidadeMedida().equalsIgnoreCase(unidade)){
                 item.setQuantidade(item.getQuantidade() + quantidade);
-            }else{
+                item.setCategoria(categoria);
+                item.setDataValidade(dataValidade);
+            } else {
                 throw new IllegalArgumentException("Unidade de medida incompatível. Unidade certa: " + item.getUnidadeMedida());
             }
-        }else{
-            ItemGeladeira novoItem = new ItemGeladeira(quantidade, unidade, this, ingrediente);
+        } else {
+            ItemGeladeira novoItem = new ItemGeladeira(quantidade, unidade, this, ingrediente, categoria, dataValidade);
             this.itens.add(novoItem);
         }
     }
