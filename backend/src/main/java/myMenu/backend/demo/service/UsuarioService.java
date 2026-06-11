@@ -5,6 +5,8 @@ import myMenu.backend.demo.model.Usuario;
 import myMenu.backend.demo.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor

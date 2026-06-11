@@ -17,14 +17,14 @@ public class ListaComprasService {
     private final IngredienteRepository ingredienteRepository;
 
     @Transactional
-    public ListaDeCompras adicionarItemNaLista(Long usuarioId, Long listaId, String nomeIngrediente, double qtde, String unidade) {
+    public ListaDeCompras adicionarItemNaLista(Long listaId, String nomeIngrediente, double qtde, String unidade, String categoria) {
         ListaDeCompras lista = listaRepository.findById(listaId)
                 .orElseThrow(() -> new IllegalArgumentException("Lista não encontrada."));
                 
         Ingrediente ingrediente = ingredienteRepository.findByNomeIgnoreCase(nomeIngrediente)
                 .orElseGet(() -> ingredienteRepository.save(new Ingrediente(nomeIngrediente)));
 
-        lista.adicionarItem(ingrediente, qtde, unidade);
+        lista.adicionarItem(ingrediente, qtde, unidade, categoria);
         return listaRepository.save(lista);
     }
 
@@ -41,4 +41,5 @@ public class ListaComprasService {
         lista.marcarComoComprado(item);
         return listaRepository.save(lista);
     }
+    
 }

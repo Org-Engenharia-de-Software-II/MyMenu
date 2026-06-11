@@ -34,12 +34,12 @@ public class ItemGeladeira {
     @JoinColumn(name = "ingrediente_id", nullable = false)
     private Ingrediente ingrediente;
 
-    public ItemGeladeira(double quantidade, String unidadeMedida, Geladeira geladeira, Ingrediente ingrediente, String categoria) {
+    public ItemGeladeira(double quantidade, String unidadeMedida, Geladeira geladeira, Ingrediente ingrediente, String categoria, LocalDate dataValidade) {
         this.quantidade = quantidade;
         this.unidadeMedida = unidadeMedida;
         this.geladeira = geladeira;
         this.ingrediente = ingrediente;
         this.categoria = categoria;
+        this.dataValidade = dataValidade;
     }
-
 }

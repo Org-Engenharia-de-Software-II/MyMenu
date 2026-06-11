@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import lombok.*;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "geladeira")

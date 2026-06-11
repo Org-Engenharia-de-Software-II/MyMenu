@@ -40,16 +40,33 @@ public class Receita {
     private double carboidrato;
     private double gordura;
 
-    public boolean verificarCompatibilidade(Geladeira geladeira, List<String> restricoes) {
-        if (geladeira == null || geladeira.getItens() == null) return false;
+    public boolean atendeRestricoesAlimentares(List<String> restricoes, List<String> ingredientesEvitados) {
+        if (ingredientesEvitados != null && !ingredientesEvitados.isEmpty()) {
+            for (ItemReceita item : this.itens) {
+                boolean temEvitado = ingredientesEvitados.stream()
+                    .anyMatch(evitado -> item.getIngrediente().getNome().equalsIgnoreCase(evitado));
+                if (temEvitado) {
+                    return false; 
+                }
+            }
+        }
+
+        return true;
+    }
+
+    public boolean possuiTodosIngredientes(Geladeira geladeira) {
+        if (geladeira == null || geladeira.getItens() == null || geladeira.getItens().isEmpty()) {
+            return false;
+        }
 
         for (ItemReceita item : this.itens) {
             boolean encontrado = geladeira.getItens().stream()
                 .anyMatch(ig -> ig.getIngrediente().getNome()
                     .equalsIgnoreCase(item.getIngrediente().getNome()));
-            if (!encontrado) return false;
+            if (!encontrado) {
+                return false;
+            }
         }
-        return true;
+        return true; 
     }
-
 }

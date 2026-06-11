@@ -25,31 +25,34 @@ public class ReceitaService {
     }
 
     public List<Receita> buscarReceitasComIngredientesDaGeladeira(Long usuarioId) {   
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
+        Usuario usuario = buscarUsuarioOuFalhar(usuarioId);
         
-        Geladeira geladeira = usuario.getGeladeira();
-        List<Receita> todasReceitas = receitaRepository.findAll();
-
-        return todasReceitas.stream()
-                .filter(receita -> receita.verificarCompatibilidade(geladeira, usuario.getRestricoes()))
+        return receitaRepository.findAll().stream()
+                .filter(receita -> receita.atendeRestricoesAlimentares(usuario.getRestricoes(), usuario.getIngredientesEvitados()))
+                .filter(receita -> receita.possuiTodosIngredientes(usuario.getGeladeira()))
                 .collect(Collectors.toList());
     }
 
     public List<Receita> buscarPriorizandoGeladeira(Long usuarioId) {     
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
-                
-        Geladeira geladeira = usuario.getGeladeira();
+        Usuario usuario = buscarUsuarioOuFalhar(usuarioId);
         List<Receita> todasReceitas = receitaRepository.findAll();
-
-        todasReceitas.sort((r1, r2) -> {
-            long matchR1 = calcularMatchDeIngredientes(r1, geladeira);
-            long matchR2 = calcularMatchDeIngredientes(r2, geladeira);
-            return Long.compare(matchR2, matchR1);
-        });
-
+        ordenarPorMatchGeladeira(todasReceitas, usuario.getGeladeira());
+        
         return todasReceitas;
+    }
+
+    public List<Receita> buscarCandidatasParaCardapio(Usuario usuario) {
+        List<Receita> todas = receitaRepository.findAll();
+
+        return todas.stream()
+                .filter(r -> r.atendeRestricoesAlimentares(usuario.getRestricoes(), usuario.getIngredientesEvitados()))
+                .sorted((r1, r2) -> Long.compare(
+                    calcularMatchDeIngredientes(r2, usuario.getGeladeira()), 
+                    calcularMatchDeIngredientes(r1, usuario.getGeladeira())
+                ))
+                
+                .limit(40)
+                .collect(Collectors.toList());
     }
 
     public List<Receita> buscarReceitasRicasEmProteina(double minimoProteina) {
@@ -64,9 +67,27 @@ public class ReceitaService {
         return receitaRepository.findByCarboidratoLessThanEqualOrderByCarboidratoAsc(maximoCarboidrato);
     }
 
+    private Usuario buscarUsuarioOuFalhar(Long usuarioId) {
+        return usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
+    }
+
+    private List<Receita> filtrarReceitasIncompativeis(List<Receita> receitas, Usuario usuario) {
+        return receitas.stream()
+                .filter(receita -> receita.atendeRestricoesAlimentares(usuario.getRestricoes(), usuario.getIngredientesEvitados()))
+                .collect(Collectors.toList());
+    }
+
+    private void ordenarPorMatchGeladeira(List<Receita> receitas, Geladeira geladeira) {
+        receitas.sort((r1, r2) -> {
+            long matchR1 = calcularMatchDeIngredientes(r1, geladeira);
+            long matchR2 = calcularMatchDeIngredientes(r2, geladeira);
+            return Long.compare(matchR2, matchR1);
+        });
+    }
+
     private long calcularMatchDeIngredientes(Receita receita, Geladeira geladeira) {
         if (geladeira == null || geladeira.getItens().isEmpty()) return 0;
-
         return receita.getItens().stream()
                 .filter(itemReceita -> aGeladeiraPossui(geladeira, itemReceita))
                 .count();
