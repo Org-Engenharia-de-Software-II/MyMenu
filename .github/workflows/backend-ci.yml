@@ -1,0 +1,53 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - master
+      - murilo
+    paths:
+      - 'backend/**' 
+  pull_request:
+    branches:
+      - master
+      - murilo
+    paths:
+      - 'backend/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    # Adicionando o banco de dados como serviço na pipeline
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: mymenu_db     
+          POSTGRES_USER: mymenu_user     
+          POSTGRES_PASSWORD: mymenu_password    
+        ports:
+          - 5432:5432
+        
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21' 
+          distribution: 'temurin'
+          cache: maven
+          
+      - name: Run tests
+        run: ./mvnw clean verify
