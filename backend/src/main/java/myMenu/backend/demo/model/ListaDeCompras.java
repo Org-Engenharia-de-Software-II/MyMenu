@@ -28,24 +28,25 @@ public class ListaDeCompras {
     @OneToMany(mappedBy = "listaDeCompras", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ItemListaCompras> itens = new ArrayList<>();
 
-    public void adicionarItem(Ingrediente ingrediente, double quantidade, String unidade) {
+    public void adicionarItem(Ingrediente ingrediente, double quantidade, String unidade, String categoria) {
         Optional<ItemListaCompras> itemExistente = this.itens.stream().filter(i -> i.getIngrediente().getNome().equalsIgnoreCase(ingrediente.getNome())).findFirst();
 
         if(itemExistente.isPresent()){
             ItemListaCompras item = itemExistente.get();
             if(item.getUnidadeMedida().equalsIgnoreCase(unidade)){
                 item.setQuantidade(item.getQuantidade() + quantidade);
+                item.setCategoria(categoria);
             }else{
                 throw new IllegalArgumentException("Unidade de medida incompatível. Unidade certa: " + item.getUnidadeMedida());
             }
         }else{
-            ItemListaCompras novoItem = new ItemListaCompras(ingrediente, quantidade,unidade, this);
+            ItemListaCompras novoItem = new ItemListaCompras(ingrediente, quantidade, unidade, this, categoria);
             this.itens.add(novoItem);
         }
     }
 
     public void marcarComoComprado(ItemListaCompras item) {
-        item.setComprado(true);
+        item.setComprado(!item.isComprado());
     }
 
 }

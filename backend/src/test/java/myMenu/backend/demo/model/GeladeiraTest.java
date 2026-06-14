@@ -1,5 +1,6 @@
 package myMenu.backend.demo.model;
 
+import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +17,7 @@ class GeladeiraTest {
     @Test
     void deveAdicionarNovoIngredienteNaGeladeira() {
         Ingrediente tomate = new Ingrediente("Tomate");
-        geladeira.adicionarIngrediente(tomate, 2.0, "unidades");
+        geladeira.adicionarIngrediente(tomate, 2.0, "unidades", "Categoria Teste", LocalDate.now().plusDays(5));
         assertEquals("Tomate", geladeira.getItens().get(0).getIngrediente().getNome());
         assertEquals(1, geladeira.getItens().size());
         assertEquals(2.0, geladeira.getItens().get(0).getQuantidade());
@@ -26,8 +27,8 @@ class GeladeiraTest {
     @Test
     void deveSomarQuantidadeQuandoIngredienteJaExisteComMesmaUnidade() {
         Ingrediente frango = new Ingrediente("Peito de Frango");
-        geladeira.adicionarIngrediente(frango, 500.0, "g");
-        geladeira.adicionarIngrediente(frango, 300.0, "g");
+        geladeira.adicionarIngrediente(frango, 500.0, "g", "Categoria Teste", LocalDate.now().plusDays(5));
+        geladeira.adicionarIngrediente(frango, 300.0, "g", "Categoria Teste", LocalDate.now().plusDays(5));
         assertEquals(1, geladeira.getItens().size(), "Não deve criar nova linha, apenas atualizar a existente");
         assertEquals(800.0, geladeira.getItens().get(0).getQuantidade(), "A quantidade total deve ser 800.0");
     }
@@ -35,9 +36,9 @@ class GeladeiraTest {
     @Test
     void deveLancarExcecaoQuandoUnidadesForemDiferentes() {
         Ingrediente leite = new Ingrediente("Leite");
-        geladeira.adicionarIngrediente(leite, 1.0, "L");
+        geladeira.adicionarIngrediente(leite, 1.0, "L", "Categoria Teste", LocalDate.now().plusDays(5));
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            geladeira.adicionarIngrediente(leite, 500.0, "ml");
+            geladeira.adicionarIngrediente(leite, 500.0, "ml", "Categoria Teste", LocalDate.now().plusDays(5));
         });
         assertTrue(exception.getMessage().contains("Unidade de medida incompatível. Unidade certa: L"));
     }
@@ -45,7 +46,7 @@ class GeladeiraTest {
     @Test
     void deveRemoverIngredienteCompletamente() {
         Ingrediente cebola = new Ingrediente("Cebola");
-        geladeira.adicionarIngrediente(cebola, 3.0, "unidades");
+        geladeira.adicionarIngrediente(cebola, 3.0, "unidades", "Categoria Teste", LocalDate.now().plusDays(5));
         geladeira.removerIngrediente(cebola);
         assertTrue(geladeira.getItens().isEmpty(), "A geladeira deve ficar vazia após a remoção");
     }

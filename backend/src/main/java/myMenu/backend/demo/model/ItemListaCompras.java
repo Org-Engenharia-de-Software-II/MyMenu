@@ -21,6 +21,9 @@ public class ItemListaCompras {
     private String unidadeMedida;
 
     @Column(nullable = false)
+    private String categoria;
+
+    @Column(nullable = false)
     private boolean comprado = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -31,11 +34,12 @@ public class ItemListaCompras {
     @JoinColumn(name = "lista_id", nullable = false)
     private ListaDeCompras listaDeCompras;
 
-    public ItemListaCompras(Ingrediente ingrediente, double quantidade, String unidadeMedida, ListaDeCompras lista) {
+    public ItemListaCompras(Ingrediente ingrediente, double quantidade, String unidadeMedida, ListaDeCompras lista, String categoria) {
         this.ingrediente = ingrediente;
         this.quantidade = quantidade;
         this.unidadeMedida = unidadeMedida;
         this.listaDeCompras = lista;
+        this.categoria = categoria;
     }
 
 }
