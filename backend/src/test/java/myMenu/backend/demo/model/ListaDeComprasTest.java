@@ -16,8 +16,8 @@ class ListaDeComprasTest {
     @Test
     void deveSomarItensRepetidosNaListaDeCompras() {
         Ingrediente queijo = new Ingrediente("Queijo Mussarela");
-        lista.adicionarItem(queijo, 200.0, "g");
-        lista.adicionarItem(queijo, 150.0, "g");
+        lista.adicionarItem(queijo, 200.0, "g", "Categoria Teste");
+        lista.adicionarItem(queijo, 150.0, "g", "Categoria Teste");
         assertEquals(1, lista.getItens().size());
         assertEquals(350.0, lista.getItens().get(0).getQuantidade());
         assertFalse(lista.getItens().get(0).isComprado(), "O item deve nascer como não comprado");
@@ -26,7 +26,7 @@ class ListaDeComprasTest {
     @Test
     void deveMarcarItemComoComprado() {
         Ingrediente arroz = new Ingrediente("Arroz");
-        lista.adicionarItem(arroz, 5.0, "kg");
+        lista.adicionarItem(arroz, 5.0, "kg", "Categoria Teste");
         ItemListaCompras itemCadastrado = lista.getItens().get(0);
         lista.marcarComoComprado(itemCadastrado);
         assertTrue(itemCadastrado.isComprado(), "O item deve constar como comprado");

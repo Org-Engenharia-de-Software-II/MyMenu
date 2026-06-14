@@ -2,6 +2,8 @@ package myMenu.backend.demo.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "item_cardapio")
@@ -27,6 +29,11 @@ public class ItemCardapio {
 
     @Column(nullable = false)
     private String tipoRefeicao;
+
+    @ElementCollection
+    @CollectionTable(name = "item_cardapio_faltantes", joinColumns = @JoinColumn(name = "item_cardapio_id"))
+    @Column(name = "ingrediente_faltante")
+    private List<String> ingredientesFaltantes = new ArrayList<>();
 
     public ItemCardapio(CardapioSemanal cardapio, Receita receita, String diaDaSemana, String tipoRefeicao) {
         this.cardapio = cardapio;

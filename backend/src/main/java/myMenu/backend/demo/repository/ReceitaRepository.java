@@ -7,6 +7,11 @@ import java.util.List;
 
 @Repository
 public interface ReceitaRepository extends JpaRepository<Receita, Long> {
-    List<Receita> findByNivelDificuldade(String nivelDificuldade);
+    List<Receita> findByNomeContainingIgnoreCase(String nome);
+    List<Receita> findByNivelDificuldadeIgnoreCase(String nivelDificuldade);
     List<Receita> findByTempoPreparoLessThanEqual(int tempoMinutos);
+    List<Receita> findByCustoEstimadoLessThanEqual(double custoMaximo);
+    List<Receita> findByProteinaGreaterThanEqualOrderByProteinaDesc(double minimoProteina);
+    List<Receita> findByKcalLessThanEqualOrderByKcalAsc(int maximoCalorias);
+    List<Receita> findByCarboidratoLessThanEqualOrderByCarboidratoAsc(double maximoCarboidrato);
 }

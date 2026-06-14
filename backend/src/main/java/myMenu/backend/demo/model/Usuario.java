@@ -22,6 +22,13 @@ public class Usuario {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(nullable = false)
+    private String senha;
+
+    private String objetivo;
+
+    private String dietaEspecifica;
+
     @ElementCollection
     @CollectionTable(
         name = "preferencia_alimentar", 
@@ -38,6 +45,14 @@ public class Usuario {
     @Column(name = "restricao")
     private List<String> restricoes = new ArrayList<>();
 
+    @ElementCollection
+    @CollectionTable(
+        name = "ingredientes_evitados", 
+        joinColumns = @JoinColumn(name = "usuario_id")
+    )
+    @Column(name = "ingrediente")
+    private List<String> ingredientesEvitados = new ArrayList<>();
+
     @ManyToMany
     @JoinTable(
         name = "usuario_receita_favorita",
@@ -53,9 +68,12 @@ public class Usuario {
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL)
     private List<CardapioSemanal> cardapios = new ArrayList<>();
 
-    public Usuario(String nome, String email) {
+    public Usuario(String nome, String email, String senha, String objetivo, String dietaEspecifica) {
         this.nome = nome;
         this.email = email;
+        this.senha = senha;
+        this.objetivo = objetivo;
+        this.dietaEspecifica = dietaEspecifica;
         this.geladeira = new Geladeira();
     }
 
@@ -67,6 +85,12 @@ public class Usuario {
         if (novoEmail != null && !novoEmail.isBlank()) {
             this.email = novoEmail;
         }
+    }
+
+    public Usuario(String nome, String email) {
+        this.nome = nome;
+        this.email = email;
+        this.geladeira = new Geladeira();
     }
     
 }
