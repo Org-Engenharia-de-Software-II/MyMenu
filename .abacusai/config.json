@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm *)",
+      "Bash(mvn *)",
+      "Bash(mvn *)",
+      "Bash(npm *)",
+      "Bash(git *)",
+      "Bash(npm *)",
+      "Bash(npm *)",
+      "Bash(npm *)",
+      "Bash(mvn *)",
+      "Bash(npm *)",
+      "Bash(npm *)",
+      "Bash(mvn *)",
+      "Bash(npm *)",
+      "Bash(npm *)",
+      "Bash(cd /home/mumuzinho/www/engenharia_software_II/MyMenu/mobile)",
+      "Bash(cd /home/mumuzinho/www/engenharia_software_II/MyMenu/mobile)",
+      "Bash(grep *)"
+    ]
+  },
+  "additionalDirectories": [
+    "/home/mumuzinho/.abacusai/tmp/codellm-prompt-qjtsAK"
+  ]
+}

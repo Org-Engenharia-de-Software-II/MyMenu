@@ -46,4 +46,24 @@ public class ListaComprasController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @GetMapping("/{listaId}")
+    public ResponseEntity<?> buscarListaPorId(@PathVariable Long listaId) {
+        try {
+            ListaDeCompras lista = listaComprasService.buscarPorId(listaId);
+            return ResponseEntity.ok(lista);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/usuario/{usuarioId}")
+    public ResponseEntity<?> buscarOuCriarListaPorUsuario(@PathVariable Long usuarioId) {
+        try {
+            ListaDeCompras lista = listaComprasService.buscarOuCriarListaPorUsuario(usuarioId);
+            return ResponseEntity.ok(lista);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

@@ -24,6 +24,13 @@ const Container = sc.View`
 const Footer = sc.View`
   margin-top: auto;
   padding-top: 12px;
+  gap: 10px;
+`;
+
+const ErrorText = sc.Text`
+  color: #ffb4b4;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const restrictionOptions = [
@@ -40,13 +47,21 @@ const dietOptions = [
   { label: 'Sem dieta específica', value: 'sem_dieta' },
 ];
 
-type OnboardingScreenProps = {
-  onFinish: () => void;
+type OnboardingPayload = {
+  dietaEspecifica: string;
+  restricoes: string[];
+  ingredientesEvitados: string[];
 };
 
-export function OnboardingScreen({ onFinish }: OnboardingScreenProps) {
+type OnboardingScreenProps = {
+  onFinish: (payload: OnboardingPayload) => void;
+  isLoading?: boolean;
+  errorMessage?: string;
+};
+
+export function OnboardingScreen({ onFinish, isLoading = false, errorMessage }: OnboardingScreenProps) {
   const [restrictions, setRestrictions] = useState<string[]>([]);
-  const [diets, setDiets] = useState<string[]>([]);
+  const [diet, setDiet] = useState<string[]>([]);
   const [avoidedIngredients, setAvoidedIngredients] = useState('');
 
   const handleToggleRestrictions = (value: string) => {
@@ -55,8 +70,19 @@ export function OnboardingScreen({ onFinish }: OnboardingScreenProps) {
     );
   };
 
-  const handleToggleDiets = (value: string) => {
-    setDiets((prev) => (prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]));
+  const handleToggleDiet = (value: string) => {
+    setDiet([value]);
+  };
+
+  const handleFinish = () => {
+    onFinish({
+      dietaEspecifica: diet[0] ?? '',
+      restricoes: restrictions,
+      ingredientesEvitados: avoidedIngredients
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean),
+    });
   };
 
   return (
@@ -76,8 +102,8 @@ export function OnboardingScreen({ onFinish }: OnboardingScreenProps) {
             <PillGroup
               title="Procura alguma dieta específica?"
               options={dietOptions}
-              selectedValues={diets}
-              onToggle={handleToggleDiets}
+              selectedValues={diet}
+              onToggle={handleToggleDiet}
             />
 
             <Label>Ingredientes que prefere evitar</Label>
@@ -88,7 +114,8 @@ export function OnboardingScreen({ onFinish }: OnboardingScreenProps) {
             />
 
             <Footer>
-              <Button title="Finalizar" variant="secondary" onPress={onFinish} />
+              {errorMessage ? <ErrorText>{errorMessage}</ErrorText> : null}
+              <Button title={isLoading ? 'Salvando...' : 'Finalizar'} variant="secondary" onPress={handleFinish} />
             </Footer>
           </Container>
         </ScrollContent>

@@ -5,8 +5,17 @@ import { FAB } from '@/app/components/atoms/FAB';
 import { Icon } from '@/app/components/atoms/Icon';
 import { RecipeInstructions } from '@/app/components/organisms/RecipeInstructions';
 
+type Recipe = {
+  id: string;
+  title: string;
+  image: string;
+  time: string;
+  difficulty: string;
+};
+
 type RecipeDetailScreenProps = {
   onBack: () => void;
+  recipe?: Recipe | null;
 };
 
 const Container = sc.View`
@@ -89,11 +98,14 @@ const instructions = [
 
 const nutrition = ['550 kcal', '15 g proteína', '50 g carboidrato', '10 g gordura', '5 mg vitamina B'];
 
-export function RecipeDetailScreen({ onBack }: RecipeDetailScreenProps) {
+export function RecipeDetailScreen({ onBack, recipe }: RecipeDetailScreenProps) {
+  const heroImage = recipe?.image ?? 'https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?auto=format&fit=crop&w=1200&q=60';
+  const title = recipe?.title ?? 'Tacos de frango';
+
   return (
     <Container>
       <Hero
-        source="https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?auto=format&fit=crop&w=1200&q=60"
+        source={heroImage}
         contentFit="cover"
       />
       <BackButton onPress={onBack}>
@@ -103,7 +115,7 @@ export function RecipeDetailScreen({ onBack }: RecipeDetailScreenProps) {
       <Content>
         <Body>
           <HeaderRow>
-            <Title>Tacos de frango</Title>
+            <Title>{title}</Title>
             <Icon name="back" size={20} color="#E8E8E8" />
           </HeaderRow>
 

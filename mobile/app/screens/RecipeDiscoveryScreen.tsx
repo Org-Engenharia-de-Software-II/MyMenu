@@ -1,15 +1,36 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import sc from 'styled-components/native';
 
 import { Badge } from '@/app/components/atoms/Badge';
 import { Icon } from '@/app/components/atoms/Icon';
 import { RecipeCard } from '@/app/components/molecules/RecipeCard';
-import { FilterBottomSheet } from '@/app/components/organisms/FilterBottomSheet';
+import { FilterBottomSheet, RecipeFilters } from '@/app/components/organisms/FilterBottomSheet';
 import { RecipeScroller } from '@/app/components/organisms/RecipeScroller';
+
+type Recipe = {
+  id: string;
+  title: string;
+  image: string;
+  time: string;
+  difficulty: string;
+};
 
 type RecipeDiscoveryScreenProps = {
   onBack: () => void;
+  recipes: Recipe[];
+  isLoading?: boolean;
+  errorMessage?: string;
+  onRefresh: () => void;
+  onViewRecipe: (recipe: Recipe) => void;
 };
+
+const defaultAppliedFilters: RecipeFilters = {
+  usePantryOnly: false,
+  prioritizePantry: false,
+  difficulty: null,
+  macro: null,
+};
+
 
 const Container = sc.View`
   flex: 1;
@@ -68,6 +89,10 @@ const FilterContent = sc.View`
 
 const FilterPress = sc.Pressable``;
 
+const RefreshWrapper = sc.View`
+  align-items: flex-start;
+`;
+
 const Section = sc.View`
   gap: 10px;
 `;
@@ -82,53 +107,135 @@ const List = sc.View`
   gap: 10px;
 `;
 
-const recipes = [
-  {
-    id: 'r1',
-    title: 'Tacos de frango',
-    image:
-      'https://images.unsplash.com/photo-1611250188496-e966043a0629?auto=format&fit=crop&w=400&q=60',
-    time: '20 minutos',
-    difficulty: 'fácil',
-  },
-  {
-    id: 'r2',
-    title: 'Carbonara',
-    image:
-      'https://images.unsplash.com/photo-1608756687911-aa1599ab0386?auto=format&fit=crop&w=400&q=60',
-    time: '20 minutos',
-    difficulty: 'difícil',
-  },
-  {
-    id: 'r3',
-    title: 'Macarrão alho e óleo',
-    image:
-      'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?auto=format&fit=crop&w=400&q=60',
-    time: '20 minutos',
-    difficulty: 'médio',
-  },
-  {
-    id: 'r4',
-    title: 'Tacos de frango',
-    image:
-      'https://images.unsplash.com/photo-1611250188496-e966043a0629?auto=format&fit=crop&w=400&q=60',
-    time: '20 minutos',
-    difficulty: 'fácil',
-  },
-];
+const FeedbackText = sc.Text`
+  color: #575757;
+  font-size: 14px;
+  font-weight: 600;
+`;
 
-export function RecipeDiscoveryScreen({ onBack }: RecipeDiscoveryScreenProps) {
+const RecipeItem = sc.View`
+  gap: 8px;
+`;
+
+const ViewRecipeButton = sc.Pressable`
+  align-self: flex-start;
+`;
+
+const PaginationRow = sc.View`
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+`;
+
+const PaginationButton = sc.Pressable<{ $disabled?: boolean }>`
+  padding: 6px 10px;
+  border-radius: ${({ theme }) => theme.radius.sm}px;
+  background-color: ${({ $disabled }) => ($disabled ? '#DCDCDC' : '#ECECEC')};
+`;
+
+const PaginationButtonText = sc.Text<{ $disabled?: boolean }>`
+  color: ${({ $disabled }) => ($disabled ? '#8E8E8E' : '#2A2A2A')};
+  font-size: 13px;
+  font-weight: 700;
+`;
+
+const PageText = sc.Text`
+  color: ${({ theme }) => theme.colors.textPrimary};
+  font-size: 13px;
+  font-weight: 700;
+`;
+
+const normalizeDifficulty = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+const pantryKeywords = ['frango', 'carne', 'peixe', 'ovo', 'arroz', 'feijao', 'queijo', 'tomate', 'cebola', 'batata', 'macarrao'];
+
+const getRecipeMinutes = (recipe: Recipe) => {
+  const minutes = Number(recipe.time.replace(/\D/g, ''));
+  return Number.isFinite(minutes) ? minutes : null;
+};
+
+const hasPantryHint = (recipe: Recipe) => {
+  const title = normalizeDifficulty(recipe.title);
+  return pantryKeywords.some((keyword) => title.includes(keyword));
+};
+
+const applyMacroFilter = (items: Recipe[], macro: RecipeFilters['macro']) => {
+  if (!macro) {
+    return items;
+  }
+
+  if (macro === '+ proteína') {
+    return items.filter((item) => {
+      const title = normalizeDifficulty(item.title);
+      return title.includes('frango') || title.includes('carne') || title.includes('peixe') || title.includes('ovo') || title.includes('prote');
+    });
+  }
+
+  if (macro === '− kcal') {
+    return items.filter((item) => {
+      const minutes = getRecipeMinutes(item);
+      return minutes !== null ? minutes <= 30 : true;
+    });
+  }
+
+  return items.filter((item) => {
+    const title = normalizeDifficulty(item.title);
+    return !title.includes('massa') && !title.includes('pao') && !title.includes('arroz');
+  });
+};
+export function RecipeDiscoveryScreen({
+  onBack,
+  recipes,
+  isLoading = false,
+  errorMessage,
+  onRefresh,
+  onViewRecipe,
+}: RecipeDiscoveryScreenProps) {
   const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [activeFilter, setActiveFilter] = useState('Rápido/fácil');
+  const [appliedFilters, setAppliedFilters] = useState<RecipeFilters>(defaultAppliedFilters);
+  const [page, setPage] = useState(1);
 
   const filters = ['Rápido/fácil', '< 30 Minutos', 'Difíceis'];
+  const pageSize = 6;
 
-  const list = useMemo(
-    () =>
-      recipes.filter((item) => item.title.toLowerCase().includes(search.toLowerCase().trim())),
-    [search],
-  );
+  const list = useMemo(() => {
+    const searchTerm = search.toLowerCase().trim();
+    let filtered = recipes.filter((item) => item.title.toLowerCase().includes(searchTerm));
+
+    if (appliedFilters.difficulty) {
+      const selectedDifficulty = normalizeDifficulty(appliedFilters.difficulty);
+      filtered = filtered.filter((item) => normalizeDifficulty(item.difficulty) === selectedDifficulty);
+    }
+
+    if (appliedFilters.usePantryOnly) {
+      filtered = filtered.filter(hasPantryHint);
+    }
+
+    if (appliedFilters.prioritizePantry) {
+      filtered = [...filtered].sort((a, b) => Number(hasPantryHint(b)) - Number(hasPantryHint(a)));
+    }
+
+    filtered = applyMacroFilter(filtered, appliedFilters.macro);
+
+    return filtered;
+  }, [recipes, search, appliedFilters]);
+
+  const totalPages = Math.max(1, Math.ceil(list.length / pageSize));
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, recipes, appliedFilters]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  const pageStart = (page - 1) * pageSize;
+  const paginatedList = list.slice(pageStart, pageStart + pageSize);
 
   return (
     <Container>
@@ -154,36 +261,88 @@ export function RecipeDiscoveryScreen({ onBack }: RecipeDiscoveryScreenProps) {
             </FilterPress>
           </SearchWrapper>
 
+          {isLoading ? <FeedbackText>Carregando receitas...</FeedbackText> : null}
+          {errorMessage ? <FeedbackText>{errorMessage}</FeedbackText> : null}
+          {!isLoading && !errorMessage && recipes.length === 0 ? <FeedbackText>Nenhuma receita encontrada.</FeedbackText> : null}
+
           <FilterRow horizontal showsHorizontalScrollIndicator={false}>
             <FilterContent>
-              {filters.map((item) => (
-                <FilterPress key={item} onPress={() => setActiveFilter(item)}>
-                  <Badge text={item} variant={activeFilter === item ? 'activeFilter' : 'filter'} />
-                </FilterPress>
-              ))}
+              {filters.map((item) => {
+                const isActive =
+                  (item === 'Rápido/fácil' && appliedFilters.difficulty === 'Fácil') ||
+                  (item === '< 30 Minutos' && appliedFilters.macro === '− kcal') ||
+                  (item === 'Difíceis' && appliedFilters.difficulty === 'Difícil');
+
+                return (
+                  <FilterPress
+                    key={item}
+                    onPress={() => {
+                      if (item === 'Rápido/fácil') {
+                        setAppliedFilters((prev) => ({ ...prev, difficulty: prev.difficulty === 'Fácil' ? null : 'Fácil' }));
+                        return;
+                      }
+
+                      if (item === '< 30 Minutos') {
+                        setAppliedFilters((prev) => ({ ...prev, macro: prev.macro === '− kcal' ? null : '− kcal' }));
+                        return;
+                      }
+
+                      setAppliedFilters((prev) => ({ ...prev, difficulty: prev.difficulty === 'Difícil' ? null : 'Difícil' }));
+                    }}>
+                    <Badge text={item} variant={isActive ? 'activeFilter' : 'filter'} />
+                  </FilterPress>
+                );
+              })}
             </FilterContent>
           </FilterRow>
 
-          <RecipeScroller title="Recomendados para você" recipes={recipes} />
+          <RecipeScroller title="Recomendados para você" recipes={list.slice(0, 10)} />
 
           <Section>
             <SectionTitle>Mais receitas</SectionTitle>
+            <RefreshWrapper>
+              <FilterPress onPress={() => onRefresh()}>
+                <Badge text="Atualizar receitas" variant="activeFilter" />
+              </FilterPress>
+            </RefreshWrapper>
             <List>
-              {list.map((recipe) => (
-                <RecipeCard
-                  key={recipe.id}
-                  horizontal
-                  title={recipe.title}
-                  image={recipe.image}
-                  time={recipe.time}
-                  difficulty={recipe.difficulty}
-                />
+              {paginatedList.map((recipe) => (
+                <RecipeItem key={recipe.id}>
+                  <RecipeCard
+                    horizontal
+                    title={recipe.title}
+                    image={recipe.image}
+                    time={recipe.time}
+                    difficulty={recipe.difficulty}
+                  />
+                  <ViewRecipeButton onPress={() => onViewRecipe(recipe)}>
+                    <Badge text="Visualizar receita" variant="activeFilter" />
+                  </ViewRecipeButton>
+                </RecipeItem>
               ))}
             </List>
+            {list.length > pageSize ? (
+              <PaginationRow>
+                <PaginationButton $disabled={page === 1} onPress={() => setPage((prev) => Math.max(1, prev - 1))}>
+                  <PaginationButtonText $disabled={page === 1}>Anterior</PaginationButtonText>
+                </PaginationButton>
+                <PageText>{`Página ${page} de ${totalPages}`}</PageText>
+                <PaginationButton
+                  $disabled={page === totalPages}
+                  onPress={() => setPage((prev) => Math.min(totalPages, prev + 1))}>
+                  <PaginationButtonText $disabled={page === totalPages}>Próxima</PaginationButtonText>
+                </PaginationButton>
+              </PaginationRow>
+            ) : null}
           </Section>
         </Content>
       </Safe>
-      <FilterBottomSheet visible={showFilters} onClose={() => setShowFilters(false)} onApply={() => {}} />
+      <FilterBottomSheet
+        visible={showFilters}
+        value={appliedFilters}
+        onClose={() => setShowFilters(false)}
+        onApply={(filtersPayload) => setAppliedFilters(filtersPayload)}
+      />
     </Container>
   );
 }

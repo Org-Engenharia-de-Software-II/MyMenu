@@ -27,6 +27,40 @@ public class CardapioSemanalService {
     
     private final ObjectMapper objectMapper; 
 
+    public List<CardapioSemanal> listarCardapiosPorUsuario(Long usuarioId) {
+        usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
+        return cardapioRepository.findByUsuarioId(usuarioId);
+    }
+
+    public CardapioSemanal obterCardapio(Long usuarioId, Long cardapioId) {
+        usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
+        
+        CardapioSemanal cardapio = cardapioRepository.findById(cardapioId)
+                .orElseThrow(() -> new IllegalArgumentException("Cardápio não encontrado."));
+        
+        if (!cardapio.getUsuario().getId().equals(usuarioId)) {
+            throw new IllegalArgumentException("Cardápio não pertence a este usuário.");
+        }
+        
+        return cardapio;
+    }
+
+    public void deletarCardapio(Long usuarioId, Long cardapioId) {
+        usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
+        
+        CardapioSemanal cardapio = cardapioRepository.findById(cardapioId)
+                .orElseThrow(() -> new IllegalArgumentException("Cardápio não encontrado."));
+        
+        if (!cardapio.getUsuario().getId().equals(usuarioId)) {
+            throw new IllegalArgumentException("Cardápio não pertence a este usuário.");
+        }
+        
+        cardapioRepository.deleteById(cardapioId);
+    }
+
     @Transactional
     public CardapioSemanal gerarCardapio(Long usuarioId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
@@ -76,6 +110,16 @@ public class CardapioSemanalService {
     private List<Map<String, Object>> converterJsonParaLista(String json) {
         try {
             String cleanJson = json.replaceAll("```json", "").replaceAll("```", "").trim();
+            
+            int startIdx = cleanJson.indexOf('[');
+            int endIdx = cleanJson.lastIndexOf(']');
+            
+            if (startIdx == -1 || endIdx == -1 || endIdx < startIdx) {
+                throw new RuntimeException("Nenhum array JSON encontrado na resposta da IA. Resposta recebida: " + cleanJson);
+            }
+            
+            cleanJson = cleanJson.substring(startIdx, endIdx + 1);
+            
             return objectMapper.readValue(cleanJson, new TypeReference<List<Map<String, Object>>>() {});
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Falha ao processar o JSON retornado pela IA: " + e.getMessage());

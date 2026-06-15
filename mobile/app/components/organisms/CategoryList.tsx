@@ -1,32 +1,20 @@
+import { useMemo } from 'react';
 import sc from 'styled-components/native';
 
 import { ShoppingListItem } from '@/app/components/molecules/ShoppingListItem';
-
-type CategoryItem = {
-  id: string;
-  name: string;
-  quantity: string;
-  checked?: boolean;
-};
-
-type Category = {
-  title: string;
-  items: CategoryItem[];
-};
 
 type Item = {
   id: string;
   name: string;
   quantity: string;
   checked: boolean;
- // category: 'Frutas e vegetais' | 'Carnes';
+  category: string;
 };
 
 type CategoryListProps = {
   categoriesItems: Item[];
   onToggleItem: (itemId: string) => void;
 };
-
 
 const Container = sc.View`
   width: 100%;
@@ -50,13 +38,23 @@ const Items = sc.View`
 `;
 
 export function CategoryList({ categoriesItems, onToggleItem }: CategoryListProps) {
+  const categories = useMemo(() => {
+    return categoriesItems.reduce<Record<string, Item[]>>((acc, item) => {
+      if (!acc[item.category]) {
+        acc[item.category] = [];
+      }
+      acc[item.category].push(item);
+      return acc;
+    }, {});
+  }, [categoriesItems]);
+
   return (
     <Container>
-      {categoriesItems.map((item) => (
-        // <Block key={category.title}>
-          // <Title>{category.title}</Title>
-          <Items key={item.id}>
-            {/* {category.items.map((item) => ( */}
+      {Object.entries(categories).map(([title, items]) => (
+        <Block key={title}>
+          <Title>{title}</Title>
+          <Items>
+            {items.map((item) => (
               <ShoppingListItem
                 key={item.id}
                 name={item.name}
@@ -64,9 +62,9 @@ export function CategoryList({ categoriesItems, onToggleItem }: CategoryListProp
                 checked={item.checked}
                 onToggle={onToggleItem ? () => onToggleItem(item.id) : undefined}
               />
-            {/* ))} */}
+            ))}
           </Items>
-        // </Block>
+        </Block>
       ))}
     </Container>
   );

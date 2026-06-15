@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal } from 'react-native';
 import sc from 'styled-components/native';
 
@@ -6,10 +6,18 @@ import { SliderTrack } from '@/app/components/atoms/SliderTrack';
 import { Switch } from '@/app/components/atoms/Switch';
 import { FilterPill } from '@/app/components/molecules/FilterPill';
 
+export type RecipeFilters = {
+  usePantryOnly: boolean;
+  prioritizePantry: boolean;
+  difficulty: 'Fácil' | 'Médio' | 'Difícil' | null;
+  macro: '+ proteína' | '− kcal' | '— carbo' | null;
+};
+
 type FilterBottomSheetProps = {
   visible: boolean;
+  value: RecipeFilters;
   onClose: () => void;
-  onApply: () => void;
+  onApply: (filters: RecipeFilters) => void;
 };
 
 const Overlay = sc.Pressable`
@@ -90,17 +98,35 @@ const ApplyText = sc.Text`
   font-weight: 800;
 `;
 
-export function FilterBottomSheet({ visible, onClose, onApply }: FilterBottomSheetProps) {
-  const [usePantryOnly, setUsePantryOnly] = useState(true);
-  const [prioritizePantry, setPrioritizePantry] = useState(true);
-  const [difficulty, setDifficulty] = useState('Difícil');
-  const [macro, setMacro] = useState('+ proteína');
+const defaultFilters: RecipeFilters = {
+  usePantryOnly: false,
+  prioritizePantry: false,
+  difficulty: null,
+  macro: null,
+};
+
+export function FilterBottomSheet({ visible, value, onClose, onApply }: FilterBottomSheetProps) {
+  const [usePantryOnly, setUsePantryOnly] = useState(value.usePantryOnly);
+  const [prioritizePantry, setPrioritizePantry] = useState(value.prioritizePantry);
+  const [difficulty, setDifficulty] = useState<RecipeFilters['difficulty']>(value.difficulty);
+  const [macro, setMacro] = useState<RecipeFilters['macro']>(value.macro);
+
+  useEffect(() => {
+    if (!visible) {
+      return;
+    }
+
+    setUsePantryOnly(value.usePantryOnly);
+    setPrioritizePantry(value.prioritizePantry);
+    setDifficulty(value.difficulty);
+    setMacro(value.macro);
+  }, [value, visible]);
 
   const handleClear = () => {
-    setUsePantryOnly(false);
-    setPrioritizePantry(false);
-    setDifficulty('Fácil');
-    setMacro('+ proteína');
+    setUsePantryOnly(defaultFilters.usePantryOnly);
+    setPrioritizePantry(defaultFilters.prioritizePantry);
+    setDifficulty(defaultFilters.difficulty);
+    setMacro(defaultFilters.macro);
   };
 
   return (
@@ -138,25 +164,40 @@ export function FilterBottomSheet({ visible, onClose, onApply }: FilterBottomShe
 
           <Section>
             <SectionTitle>Nível de dificuldade</SectionTitle>
-            <PillRow>
-              {['Fácil', 'Médio', 'Difícil'].map((item) => (
-                <FilterPill key={item} label={item} active={difficulty === item} onPress={() => setDifficulty(item)} />
-              ))}
-            </PillRow>
+              <PillRow>
+                {['Fácil', 'Médio', 'Difícil'].map((item) => (
+                  <FilterPill
+                    key={item}
+                    label={item}
+                    active={difficulty === item}
+                    onPress={() => setDifficulty((current) => (current === item ? null : (item as RecipeFilters['difficulty'])))}
+                  />
+                ))}
+              </PillRow>
           </Section>
 
           <Section>
             <SectionTitle>Macronutrientes</SectionTitle>
-            <PillRow>
-              {['+ proteína', '− kcal', '— carbo'].map((item) => (
-                <FilterPill key={item} label={item} active={macro === item} onPress={() => setMacro(item)} />
-              ))}
-            </PillRow>
+              <PillRow>
+                {['+ proteína', '− kcal', '— carbo'].map((item) => (
+                  <FilterPill
+                    key={item}
+                    label={item}
+                    active={macro === item}
+                    onPress={() => setMacro((current) => (current === item ? null : (item as RecipeFilters['macro'])))}
+                  />
+                ))}
+              </PillRow>
           </Section>
 
           <ApplyButton
             onPress={() => {
-              onApply();
+              onApply({
+                usePantryOnly,
+                prioritizePantry,
+                difficulty,
+                macro,
+              });
               onClose();
             }}
           >

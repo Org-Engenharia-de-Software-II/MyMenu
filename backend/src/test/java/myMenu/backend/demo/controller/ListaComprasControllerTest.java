@@ -80,4 +80,25 @@ class ListaComprasControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Item não encontrado na lista."));
     }
+
+    @Test
+    void deveBuscarListaPorIdComSucesso() throws Exception {
+        ListaDeCompras lista = new ListaDeCompras();
+
+        when(listaComprasService.buscarPorId(1L)).thenReturn(lista);
+
+        mockMvc.perform(get("/listas/1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void deveBuscarOuCriarListaPorUsuarioComSucesso() throws Exception {
+        ListaDeCompras lista = new ListaDeCompras();
+
+        when(listaComprasService.buscarOuCriarListaPorUsuario(1L)).thenReturn(lista);
+
+        mockMvc.perform(get("/listas/usuario/1"))
+                .andExpect(status().isOk());
+    }
+
 }

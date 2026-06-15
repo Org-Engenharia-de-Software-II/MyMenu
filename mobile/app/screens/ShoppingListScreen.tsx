@@ -1,31 +1,32 @@
-import { useState } from 'react';
 import sc from 'styled-components/native';
 
 import { FAB } from '@/app/components/atoms/FAB';
 import { Icon } from '@/app/components/atoms/Icon';
 import { CategoryList } from '@/app/components/organisms/CategoryList';
 
-type ShoppingListScreenProps = {
-  onBack: () => void;
-  onAddProduct: () => void;
-};
-
 type Item = {
   id: string;
   name: string;
   quantity: string;
   checked: boolean;
- // category: 'Frutas e vegetais' | 'Carnes';
+  category: string;
 };
 
-const initialItems: Item[] = [
-  { id: '1', name: 'Cenoura', quantity: '3 unidades', checked: false  },
-  { id: '2', name: 'Chuchu', quantity: '2 unidades', checked: true  },
-  { id: '3', name: 'Tomate', quantity: '1 unidade', checked: false  },
-  { id: '4', name: 'Linguiça', quantity: '500 gramas', checked: false },
-  { id: '5', name: 'Peito de frango', quantity: '1 quilo', checked: true },
-  { id: '6', name: 'Carne moída', quantity: '2 quilos', checked: false },
-];
+type Session = {
+  userId: number;
+  listId: number;
+  name: string;
+};
+
+type ShoppingListScreenProps = {
+  onBack: () => void;
+  onAddProduct: () => void;
+  onRefresh: (sessionData?: Session) => void;
+  onToggleItem: (itemId: string) => void;
+  isLoading?: boolean;
+  errorMessage?: string;
+  items: Item[];
+};
 
 const Container = sc.View`
   flex: 1;
@@ -62,26 +63,30 @@ const FabWrap = sc.View`
   bottom: 18px;
 `;
 
-export function ShoppingListScreen({ onBack, onAddProduct }: ShoppingListScreenProps) {
-  const [items, setItems] = useState<Item[]>(initialItems);
-  
-  // const categories = useMemo(
-  //   () => [
-  //     {
-  //       title: 'Frutas e vegetais',
-  //       items: items.filter((item) => item.category === 'Frutas e vegetais'),
-  //     },
-  //     {
-  //       title: 'Carnes',
-  //       items: items.filter((item) => item.category === 'Carnes'),
-  //     },
-  //   ],
-  //   [items],
-  // );
+const ErrorText = sc.Text`
+  color: #ffb4b4;
+  font-size: 14px;
+  font-weight: 600;
+`;
 
-  const handleToggleItem = (itemId: string) => {
-    setItems((prev) => prev.map((item) => (item.id === itemId ? { ...item, checked: !item.checked } : item)));
-  };
+const RefreshButton = sc.Pressable`
+  align-self: flex-start;
+  border-radius: ${({ theme }) => theme.radius.sm}px;
+  padding: 6px 10px;
+  background-color: ${({ theme }) => theme.colors.surface};
+`;
+
+const RefreshText = sc.Text`
+  color: ${({ theme }) => theme.colors.textPrimary};
+  font-size: 13px;
+  font-weight: 700;
+`;
+
+const ListScroll = sc.ScrollView`
+  flex: 1;
+`;
+
+export function ShoppingListScreen({ onBack, onAddProduct, onRefresh, onToggleItem, isLoading = false, errorMessage, items }: ShoppingListScreenProps) {
 
   return (
     <Container>
@@ -94,7 +99,15 @@ export function ShoppingListScreen({ onBack, onAddProduct }: ShoppingListScreenP
             </BackButton>
           </Header>
 
-          <CategoryList categoriesItems={items} onToggleItem={handleToggleItem} />
+          <RefreshButton onPress={() => onRefresh()}>
+            <RefreshText>{isLoading ? 'Atualizando...' : 'Sincronizar'}</RefreshText>
+          </RefreshButton>
+
+          {errorMessage ? <ErrorText>{errorMessage}</ErrorText> : null}
+
+          <ListScroll showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 90 }}>
+            <CategoryList categoriesItems={items} onToggleItem={onToggleItem} />
+          </ListScroll>
 
           <FabWrap>
             <FAB onPress={onAddProduct} />
