@@ -22,6 +22,11 @@ public class CardapioAIService {
         if (chatClient == null) {
             throw new IllegalStateException("Serviço de IA desativado. Configure OpenAI para habilitar geração de cardápio.");
         }
+        System.out.println("Receitas candidatas para IA:");
+        for (Receita r : candidatas) {
+            System.out.println(String.format("ID: %d | Nome: %s | %d kcal | Prot: %.1fg | Carbo: %.1fg | Gord: %.1fg",
+                    r.getId(), r.getNome(), r.getKcal(), r.getProteina(), r.getCarboidrato(), r.getGordura()));
+        }
 
         String catalogo = construirCatalogo(candidatas);
         
@@ -39,7 +44,9 @@ public class CardapioAIService {
             1. Escolha EXATAMENTE 14 receitas do catálogo abaixo (uma para o ALMOCO e uma para o JANTAR, para os 7 dias da semana).
             2. NENHUMA receita pode se repetir.
             3. A escolha deve estar alinhada ao objetivo, balanceando os macronutrientes.
-            4. Você DEVE responder ÚNICA E EXCLUSIVAMENTE com um array JSON válido. Nenhuma palavra a mais, nenhum bloco de formatação Markdown (como ```json).
+            4. As restrições alimentares do usuário DEVEM ser respeitadas (se houver).
+            5. As preferências alimentares do usuário DEVEM ser consideradas (se houver).
+            6. Você DEVE responder ÚNICA E EXCLUSIVAMENTE com um array JSON válido de depht até 1000. Nenhuma palavra a mais, nenhum bloco de formatação Markdown (como ```json).
             
             FORMATO DE SAÍDA OBRIGATÓRIO:
             [

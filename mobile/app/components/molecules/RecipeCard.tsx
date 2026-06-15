@@ -9,7 +9,7 @@ type RecipeCardProps = {
   time: string;
   difficulty: string;
   horizontal?: boolean;
-  children: any;
+  children?: any;
 };
 
 const Card = sc.View<{ $horizontal: boolean }>`

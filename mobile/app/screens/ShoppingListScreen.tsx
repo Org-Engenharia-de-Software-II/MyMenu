@@ -82,6 +82,10 @@ const RefreshText = sc.Text`
   font-weight: 700;
 `;
 
+const ListScroll = sc.ScrollView`
+  flex: 1;
+`;
+
 export function ShoppingListScreen({ onBack, onAddProduct, onRefresh, onToggleItem, isLoading = false, errorMessage, items }: ShoppingListScreenProps) {
 
   return (
@@ -101,7 +105,9 @@ export function ShoppingListScreen({ onBack, onAddProduct, onRefresh, onToggleIt
 
           {errorMessage ? <ErrorText>{errorMessage}</ErrorText> : null}
 
-          <CategoryList categoriesItems={items} onToggleItem={onToggleItem} />
+          <ListScroll showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 90 }}>
+            <CategoryList categoriesItems={items} onToggleItem={onToggleItem} />
+          </ListScroll>
 
           <FabWrap>
             <FAB onPress={onAddProduct} />

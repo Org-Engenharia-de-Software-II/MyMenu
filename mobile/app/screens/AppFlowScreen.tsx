@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Constants from 'expo-constants';
 import { Animated, Easing, Platform, StyleSheet, View } from 'react-native';
 
@@ -11,8 +11,9 @@ import { DashboardScreen } from './DashboardScreen';
 import { RecipeDetailScreen } from './RecipeDetailScreen';
 import { RecipeDiscoveryScreen } from './RecipeDiscoveryScreen';
 import { ShoppingListScreen } from './ShoppingListScreen';
+import { WeeklyMenuScreen } from './WeeklyMenuScreen';
 
-type FlowStep = 'welcome' | 'signup' | 'login' | 'onboarding' | 'dashboard' | 'shopping-list' | 'add-product' | 'recipes' | 'recipe-detail';
+type FlowStep = 'welcome' | 'signup' | 'login' | 'onboarding' | 'dashboard' | 'shopping-list' | 'add-product' | 'recipes' | 'recipe-detail' | 'weekly-menu';
 
 type Session = {
   userId: number;
@@ -65,7 +66,7 @@ type ExpoManifest = {
   debuggerHost?: string;
 };
 
-const flowOrder: FlowStep[] = ['welcome', 'signup', 'login', 'onboarding', 'dashboard', 'shopping-list', 'add-product', 'recipes', 'recipe-detail'];
+const flowOrder: FlowStep[] = ['welcome', 'signup', 'login', 'onboarding', 'dashboard', 'shopping-list', 'add-product', 'recipes', 'recipe-detail', 'weekly-menu'];
 const API_PORT = 8080;
 const FALLBACK_LIST_ID = 1;
 const RECIPE_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=60';
@@ -82,6 +83,7 @@ export function AppFlowScreen() {
   const [menuMeals, setMenuMeals] = useState<MealEntry[]>([]);
   const [recipes, setRecipes] = useState<RecipeItem[]>([]);
   const [selectedRecipe, setSelectedRecipe] = useState<SelectedRecipe>(null);
+  const [selectedCardapio, setSelectedCardapio] = useState<any>(null);
   const addTarget: AddProductTarget = 'shopping_list';
   const [authLoading, setAuthLoading] = useState(false);
   const [onboardingLoading, setOnboardingLoading] = useState(false);
@@ -143,7 +145,7 @@ export function AppFlowScreen() {
       }
     }
 
-    const manifest = (Constants.manifest2?.extra?.expoGoConfig ?? Constants.manifest) as ExpoHostUri & ExpoManifest;
+    const manifest = Constants.manifest as ExpoHostUri & ExpoManifest;
     const debuggerHost = manifest?.debuggerHost ?? manifest?.hostUri ?? '';
     if (debuggerHost) {
       const host = debuggerHost.split(':')[0];
@@ -161,6 +163,8 @@ export function AppFlowScreen() {
     }
     return unit;
   }, []);
+
+  const apiBaseUrl = resolveApiBaseUrl();
 
   const resolveUserListId = useCallback(async (userId: number): Promise<number> => {
     const response = await fetch(`${resolveApiBaseUrl()}/listas/usuario/${userId}`);
@@ -221,28 +225,50 @@ export function AppFlowScreen() {
     }
   }, [mapRecipe, resolveApiBaseUrl, session]);
 
+  const getTodayDayAbbreviation = useCallback((): string => {
+    const days = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
+    const today = new Date().getDay();
+    return days[today];
+  }, []);
+
+  useEffect(() => {
+    async function fetchCardapios() {
+      console.log("carregando");
+      try {
+        const response = await fetch(`${resolveApiBaseUrl()}/usuarios/${session?.userId}/cardapio`);
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || 'Falha ao carregar cardápios.');
+        }
+        const data = await response.json();
+        console.log(data)
+        setMenuMeals(mapMenuItems(data[0].itensCardapio || []));
+      } catch (err) {
+        console.log(err instanceof Error ? err.message : 'Erro ao carregar cardápios.');
+      } finally {
+        console.log("carregado");
+      }
+    }
+
+    fetchCardapios();
+  }, [resolveApiBaseUrl, session?.userId]);
+
   const mapMenuItems = useCallback((items: BackendMealItem[]): MealEntry[] => {
-    const prioridade = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
     const refeicoes = ['café da manhã', 'almoço', 'jantar'];
+    const todayDay = getTodayDayAbbreviation();
 
     return items
-      .filter((item) => item.receita?.nome)
+      .filter((item) => item.receita?.nome && item.diaDaSemana?.substring(0, 3).toUpperCase() === todayDay)
       .sort((a, b) => {
-        const diaA = prioridade.indexOf((a.diaDaSemana ?? '').toLowerCase());
-        const diaB = prioridade.indexOf((b.diaDaSemana ?? '').toLowerCase());
-        if (diaA !== diaB) {
-          return diaA - diaB;
-        }
         const refA = refeicoes.indexOf((a.tipoRefeicao ?? '').toLowerCase());
         const refB = refeicoes.indexOf((b.tipoRefeicao ?? '').toLowerCase());
         return refA - refB;
       })
-      .slice(0, 3)
       .map((item) => ({
         period: item.tipoRefeicao ?? 'Refeição',
         meal: item.receita?.nome ?? '',
       }));
-  }, []);
+  }, [getTodayDayAbbreviation]);
 
   const generateWeeklyMenu = useCallback(async () => {
     if (!session) {
@@ -265,7 +291,7 @@ export function AppFlowScreen() {
       const itens = Array.isArray(cardapio?.itensCardapio) ? cardapio.itensCardapio : [];
       setMenuMeals(mapMenuItems(itens));
       await syncRecipes();
-      animateTo('recipes');
+      animateTo('weekly-menu');
     } catch (error) {
       setMenuError(error instanceof Error ? error.message : 'Erro inesperado ao gerar cardápio.');
     } finally {
@@ -425,6 +451,9 @@ export function AppFlowScreen() {
             await syncRecipes();
             animateTo('recipes');
           }}
+          onOpenWeeklyMenu={() => {
+            animateTo('weekly-menu');
+          }}
         />
       );
     }
@@ -529,6 +558,21 @@ export function AppFlowScreen() {
         <RecipeDetailScreen
           onBack={() => animateTo('recipes')}
           recipe={selectedRecipe}
+        />
+      );
+    }
+
+    if (currentStep === 'weekly-menu') {
+      return (
+        <WeeklyMenuScreen
+          userId={session?.userId ?? 0}
+          apiBaseUrl={resolveApiBaseUrl()}
+          onOpenFilters={() => {}}
+          onGenerateMenu={generateWeeklyMenu}
+          onViewDetails={(cardapio) => {
+            setSelectedCardapio(cardapio);
+          }}
+          onBack={() => animateTo('dashboard')}
         />
       );
     }

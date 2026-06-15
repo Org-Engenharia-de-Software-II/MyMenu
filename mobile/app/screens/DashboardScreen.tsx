@@ -11,6 +11,7 @@ type MealEntry = {
 type DashboardScreenProps = {
   onOpenShoppingList: () => void;
   onOpenRecipes: () => void;
+  onOpenWeeklyMenu: () => void;
   onGenerateWeeklyMenu: () => void;
   menuMeals: MealEntry[];
   isGeneratingMenu?: boolean;
@@ -68,7 +69,7 @@ const ActionCard = sc.Pressable`
 
 const ActionText = sc.Text`
   color: ${({ theme }) => theme.colors.textDark};
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 700;
   text-align: center;
 `;
@@ -127,6 +128,7 @@ const ErrorText = sc.Text`
 export function DashboardScreen({
   onOpenShoppingList,
   onOpenRecipes,
+  onOpenWeeklyMenu,
   onGenerateWeeklyMenu,
   menuMeals,
   isGeneratingMenu = false,
@@ -143,7 +145,7 @@ export function DashboardScreen({
               <Subtitle>Preparado para organizar a semana?</Subtitle>
             </Header>
 
-            <MenuCard meals={menuMeals} onPressCatalog={onOpenRecipes} />
+            <MenuCard meals={menuMeals} onPressCatalog={onOpenWeeklyMenu} />
 
             <ActionRow>
               <ActionCard onPress={onOpenShoppingList}>
@@ -154,6 +156,10 @@ export function DashboardScreen({
                 <Icon name="search" size={24} color="#1A1A1A" />
                 <ActionText>Descobrir receitas</ActionText>
               </ActionCard>
+              {/* <ActionCard onPress={onOpenWeeklyMenu}>
+                <Icon name="calendar" size={24} color="#1A1A1A" />
+                <ActionText>Menu semanal</ActionText>
+              </ActionCard> */}
             </ActionRow>
 
             <CTA onPress={onGenerateWeeklyMenu}>

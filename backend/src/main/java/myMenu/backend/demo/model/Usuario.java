@@ -2,6 +2,7 @@ package myMenu.backend.demo.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,6 +67,7 @@ public class Usuario {
     private Geladeira geladeira;
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<CardapioSemanal> cardapios = new ArrayList<>();
 
     public Usuario(String nome, String email, String senha, String objetivo, String dietaEspecifica) {
