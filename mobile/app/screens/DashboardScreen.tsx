@@ -3,6 +3,20 @@ import sc from 'styled-components/native';
 import { Icon } from '@/app/components/atoms/Icon';
 import { MenuCard } from '@/app/components/molecules/MenuCard';
 
+type MealEntry = {
+  period: string;
+  meal: string;
+};
+
+type DashboardScreenProps = {
+  onOpenShoppingList: () => void;
+  onOpenRecipes: () => void;
+  onGenerateWeeklyMenu: () => void;
+  menuMeals: MealEntry[];
+  isGeneratingMenu?: boolean;
+  menuError?: string;
+};
+
 const Container = sc.View`
   flex: 1;
   background-color: ${({ theme }) => theme.colors.background};
@@ -104,18 +118,21 @@ const ActivityTime = sc.Text`
   font-size: 12px;
 `;
 
-type DashboardScreenProps = {
-  onOpenShoppingList: () => void;
-  onOpenRecipes: () => void;
-};
+const ErrorText = sc.Text`
+  color: #ffb4b4;
+  font-size: 13px;
+  font-weight: 600;
+`;
 
-const meals = [
-  { period: 'Café da manhã', meal: 'Pão com presunto e queijo' },
-  { period: 'Almoço', meal: 'Arroz e feijão' },
-  { period: 'Jantar', meal: 'Miojo com requeijão' },
-];
+export function DashboardScreen({
+  onOpenShoppingList,
+  onOpenRecipes,
+  onGenerateWeeklyMenu,
+  menuMeals,
+  isGeneratingMenu = false,
+  menuError,
+}: DashboardScreenProps) {
 
-export function DashboardScreen({ onOpenShoppingList, onOpenRecipes }: DashboardScreenProps) {
   return (
     <Container>
       <Safe>
@@ -126,7 +143,7 @@ export function DashboardScreen({ onOpenShoppingList, onOpenRecipes }: Dashboard
               <Subtitle>Preparado para organizar a semana?</Subtitle>
             </Header>
 
-            <MenuCard meals={meals} onPressCatalog={onOpenRecipes} />
+            <MenuCard meals={menuMeals} onPressCatalog={onOpenRecipes} />
 
             <ActionRow>
               <ActionCard onPress={onOpenShoppingList}>
@@ -139,9 +156,10 @@ export function DashboardScreen({ onOpenShoppingList, onOpenRecipes }: Dashboard
               </ActionCard>
             </ActionRow>
 
-            <CTA onPress={onOpenRecipes}>
-              <CTAText>Gerar cardápio semanal</CTAText>
+            <CTA onPress={onGenerateWeeklyMenu}>
+              <CTAText>{isGeneratingMenu ? 'Gerando cardápio...' : 'Gerar cardápio semanal'}</CTAText>
             </CTA>
+            {menuError ? <ErrorText>{menuError}</ErrorText> : null}
 
             <SectionTitle>Atividades recentes</SectionTitle>
             <ActivityList>

@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
 import org.mockito.Answers;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,12 +26,16 @@ class CardapioAIServiceTest {
     @Mock
     private ChatClient.Builder builderMock;
 
+    @Mock
+    private ObjectProvider<ChatClient.Builder> builderProviderMock;
+
     private CardapioAIService aiService;
 
     @BeforeEach
     void setUp() {
+        when(builderProviderMock.getIfAvailable()).thenReturn(builderMock);
         when(builderMock.build()).thenReturn(chatClientMock);
-        aiService = new CardapioAIService(builderMock);
+        aiService = new CardapioAIService(builderProviderMock);
     }
 
     @Test

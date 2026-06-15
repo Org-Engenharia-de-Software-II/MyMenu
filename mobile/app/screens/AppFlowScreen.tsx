@@ -1,16 +1,74 @@
-import { useRef, useState } from 'react';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import Constants from 'expo-constants';
+import { Animated, Easing, Platform, StyleSheet, View } from 'react-native';
 
+import { identifyFoodCategory } from '@/app/services/identifyFoodCategory';
+import { AddProductScreen, AddProductTarget } from '@/app/screens/AddProductScreen';
 import { OnboardingScreen } from '@/app/screens/OnboardingScreen';
 import { SignUpScreen } from '@/app/screens/SignUpScreen';
 import { WelcomeScreen } from '@/app/screens/WelcomeScreen';
 import { DashboardScreen } from './DashboardScreen';
+import { RecipeDetailScreen } from './RecipeDetailScreen';
 import { RecipeDiscoveryScreen } from './RecipeDiscoveryScreen';
 import { ShoppingListScreen } from './ShoppingListScreen';
 
-type FlowStep = 'welcome' | 'signup' | 'onboarding' | 'dashboard' | 'shopping-list' | 'recipes';
+type FlowStep = 'welcome' | 'signup' | 'login' | 'onboarding' | 'dashboard' | 'shopping-list' | 'add-product' | 'recipes' | 'recipe-detail';
 
-const flowOrder: FlowStep[] = ['welcome', 'signup', 'onboarding', 'dashboard', 'shopping-list', 'recipes'];
+type Session = {
+  userId: number;
+  listId: number;
+  name: string;
+};
+
+type ShoppingItem = {
+  id: string;
+  name: string;
+  quantity: string;
+  checked: boolean;
+  category: string;
+};
+
+type MealEntry = {
+  period: string;
+  meal: string;
+};
+
+type RecipeItem = {
+  id: string;
+  title: string;
+  image: string;
+  time: string;
+  difficulty: string;
+};
+
+type SelectedRecipe = RecipeItem | null;
+
+type BackendRecipe = {
+  id?: number;
+  nome?: string;
+  imagemUrl?: string;
+  tempoPreparo?: number;
+  nivelDificuldade?: string;
+};
+
+type BackendMealItem = {
+  diaDaSemana?: string;
+  tipoRefeicao?: string;
+  receita?: BackendRecipe;
+};
+
+type ExpoHostUri = {
+  hostUri?: string;
+};
+
+type ExpoManifest = {
+  debuggerHost?: string;
+};
+
+const flowOrder: FlowStep[] = ['welcome', 'signup', 'login', 'onboarding', 'dashboard', 'shopping-list', 'add-product', 'recipes', 'recipe-detail'];
+const API_PORT = 8080;
+const FALLBACK_LIST_ID = 1;
+const RECIPE_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=60';
 
 export function AppFlowScreen() {
   const [step, setStep] = useState<FlowStep>('welcome');
@@ -19,10 +77,28 @@ export function AppFlowScreen() {
     to: FlowStep;
     direction: 1 | -1;
   } | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
+  const [menuMeals, setMenuMeals] = useState<MealEntry[]>([]);
+  const [recipes, setRecipes] = useState<RecipeItem[]>([]);
+  const [selectedRecipe, setSelectedRecipe] = useState<SelectedRecipe>(null);
+  const addTarget: AddProductTarget = 'shopping_list';
+  const [authLoading, setAuthLoading] = useState(false);
+  const [onboardingLoading, setOnboardingLoading] = useState(false);
+  const [shoppingLoading, setShoppingLoading] = useState(false);
+  const [addLoading, setAddLoading] = useState(false);
+  const [menuLoading, setMenuLoading] = useState(false);
+  const [recipesLoading, setRecipesLoading] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [onboardingError, setOnboardingError] = useState('');
+  const [shoppingError, setShoppingError] = useState('');
+  const [addError, setAddError] = useState('');
+  const [menuError, setMenuError] = useState('');
+  const [recipesError, setRecipesError] = useState('');
   const progress = useRef(new Animated.Value(0)).current;
   const isTransitioning = useRef(false);
 
-  const animateTo = (nextStep: FlowStep) => {
+  const animateTo = useCallback((nextStep: FlowStep) => {
     if (isTransitioning.current || nextStep === step) {
       return;
     }
@@ -48,31 +124,416 @@ export function AppFlowScreen() {
 
       isTransitioning.current = false;
     });
-  };
+  }, [progress, step]);
+
+  const resolveApiBaseUrl = useCallback(() => {
+    if (Platform.OS === 'web') {
+      return `http://localhost:${API_PORT}`;
+    }
+
+    if (Platform.OS === 'android') {
+      return `http://10.0.2.2:${API_PORT}`;
+    }
+
+    const hostFromExpoConfig = (Constants.expoConfig?.hostUri ?? '') as string;
+    if (hostFromExpoConfig) {
+      const host = hostFromExpoConfig.split(':')[0];
+      if (host) {
+        return `http://${host}:${API_PORT}`;
+      }
+    }
+
+    const manifest = (Constants.manifest2?.extra?.expoGoConfig ?? Constants.manifest) as ExpoHostUri & ExpoManifest;
+    const debuggerHost = manifest?.debuggerHost ?? manifest?.hostUri ?? '';
+    if (debuggerHost) {
+      const host = debuggerHost.split(':')[0];
+      if (host) {
+        return `http://${host}:${API_PORT}`;
+      }
+    }
+
+    return `http://localhost:${API_PORT}`;
+  }, []);
+
+  const normalizeUnit = useCallback((unit: string): string => {
+    if (unit === 'unidades') {
+      return 'unidade';
+    }
+    return unit;
+  }, []);
+
+  const resolveUserListId = useCallback(async (userId: number): Promise<number> => {
+    const response = await fetch(`${resolveApiBaseUrl()}/listas/usuario/${userId}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Falha ao localizar lista do usuário.');
+    }
+    const lista = await response.json();
+    return Number(lista.id || FALLBACK_LIST_ID);
+  }, [resolveApiBaseUrl]);
+
+  const mapListResponseToItems = useCallback((lista: any): ShoppingItem[] => {
+    if (!lista || !Array.isArray(lista.itens)) {
+      return [];
+    }
+
+    return lista.itens.map((item: any) => ({
+      id: String(item.id),
+      name: item.ingrediente?.nome ?? '',
+      quantity: `${item.quantidade} ${item.unidadeMedida}`,
+      checked: Boolean(item.comprado),
+      category: item.categoria || identifyFoodCategory(item.ingrediente?.nome ?? ''),
+    }));
+  }, []);
+
+  const mapRecipe = useCallback((recipe: BackendRecipe): RecipeItem => ({
+    id: String(recipe.id ?? Math.random()),
+    title: recipe.nome ?? 'Receita',
+    image: recipe.imagemUrl ?? RECIPE_FALLBACK_IMAGE,
+    time: `${recipe.tempoPreparo ?? 0} minutos`,
+    difficulty: recipe.nivelDificuldade ?? 'médio',
+  }), []);
+
+  const syncRecipes = useCallback(async (sessionData?: Session) => {
+    const currentSession = sessionData ?? session;
+    if (!currentSession) {
+      return;
+    }
+
+    setRecipesLoading(true);
+    setRecipesError('');
+    try {
+      const response = await fetch(`${resolveApiBaseUrl()}/receitas/sugestoes/${currentSession.userId}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Falha ao carregar receitas.');
+      }
+      const data = await response.json();
+      if (!Array.isArray(data)) {
+        setRecipes([]);
+        return;
+      }
+      setRecipes(data.map((item: BackendRecipe) => mapRecipe(item)));
+    } catch (error) {
+      setRecipesError(error instanceof Error ? error.message : 'Erro inesperado ao carregar receitas.');
+    } finally {
+      setRecipesLoading(false);
+    }
+  }, [mapRecipe, resolveApiBaseUrl, session]);
+
+  const mapMenuItems = useCallback((items: BackendMealItem[]): MealEntry[] => {
+    const prioridade = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+    const refeicoes = ['café da manhã', 'almoço', 'jantar'];
+
+    return items
+      .filter((item) => item.receita?.nome)
+      .sort((a, b) => {
+        const diaA = prioridade.indexOf((a.diaDaSemana ?? '').toLowerCase());
+        const diaB = prioridade.indexOf((b.diaDaSemana ?? '').toLowerCase());
+        if (diaA !== diaB) {
+          return diaA - diaB;
+        }
+        const refA = refeicoes.indexOf((a.tipoRefeicao ?? '').toLowerCase());
+        const refB = refeicoes.indexOf((b.tipoRefeicao ?? '').toLowerCase());
+        return refA - refB;
+      })
+      .slice(0, 3)
+      .map((item) => ({
+        period: item.tipoRefeicao ?? 'Refeição',
+        meal: item.receita?.nome ?? '',
+      }));
+  }, []);
+
+  const generateWeeklyMenu = useCallback(async () => {
+    if (!session) {
+      setMenuError('Sessão inválida. Faça login novamente.');
+      return;
+    }
+
+    setMenuLoading(true);
+    setMenuError('');
+    try {
+      const response = await fetch(`${resolveApiBaseUrl()}/usuarios/${session.userId}/cardapio/gerar`, {
+        method: 'POST',
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Falha ao gerar cardápio semanal.');
+      }
+
+      const cardapio = await response.json();
+      const itens = Array.isArray(cardapio?.itensCardapio) ? cardapio.itensCardapio : [];
+      setMenuMeals(mapMenuItems(itens));
+      await syncRecipes();
+      animateTo('recipes');
+    } catch (error) {
+      setMenuError(error instanceof Error ? error.message : 'Erro inesperado ao gerar cardápio.');
+    } finally {
+      setMenuLoading(false);
+    }
+  }, [animateTo, mapMenuItems, resolveApiBaseUrl, session, syncRecipes]);
+
+  const syncShoppingList = useCallback(async (sessionData?: Session) => {
+    const currentSession = sessionData ?? session;
+    if (!currentSession) {
+      return;
+    }
+
+    setShoppingLoading(true);
+    setShoppingError('');
+    try {
+      const response = await fetch(`${resolveApiBaseUrl()}/listas/${currentSession.listId}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Falha ao sincronizar lista.');
+      }
+      const data = await response.json();
+      setShoppingItems(mapListResponseToItems(data));
+    } catch (error) {
+      setShoppingError(error instanceof Error ? error.message : 'Erro inesperado ao sincronizar lista.');
+    } finally {
+      setShoppingLoading(false);
+    }
+  }, [mapListResponseToItems, resolveApiBaseUrl, session]);
 
   const renderStep = (currentStep: FlowStep) => {
     if (currentStep === 'signup') {
-      return <SignUpScreen onSubmit={() => animateTo('onboarding')} />;
+      return (
+        <SignUpScreen
+          mode="signup"
+          isLoading={authLoading}
+          errorMessage={authError}
+          onBack={() => animateTo('welcome')}
+          onSubmit={async ({ name, email, password, goal }) => {
+            setAuthLoading(true);
+            setAuthError('');
+            try {
+              const response = await fetch(`${resolveApiBaseUrl()}/usuarios`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome: name, email, senha: password, objetivo: goal }),
+              });
+              if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Falha no cadastro.');
+              }
+              const user = await response.json();
+              let listId = FALLBACK_LIST_ID;
+              try {
+                listId = await resolveUserListId(Number(user.id));
+              } catch {
+                listId = FALLBACK_LIST_ID;
+              }
+              setSession({ userId: Number(user.id), listId, name: user.nome ?? name });
+              animateTo('onboarding');
+            } catch (error) {
+              setAuthError(error instanceof Error ? error.message : 'Erro inesperado no cadastro.');
+            } finally {
+              setAuthLoading(false);
+            }
+          }}
+        />
+      );
+    }
+
+    if (currentStep === 'login') {
+      return (
+        <SignUpScreen
+          mode="login"
+          isLoading={authLoading}
+          errorMessage={authError}
+          onBack={() => animateTo('welcome')}
+          onSubmit={async ({ email, password }) => {
+            setAuthLoading(true);
+            setAuthError('');
+            try {
+              const response = await fetch(`${resolveApiBaseUrl()}/usuarios/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, senha: password }),
+              });
+              if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Falha no login.');
+              }
+              const user = await response.json();
+              let listId = FALLBACK_LIST_ID;
+              try {
+                listId = await resolveUserListId(Number(user.id));
+              } catch {
+                listId = FALLBACK_LIST_ID;
+              }
+              const nextSession = { userId: Number(user.id), listId, name: user.nome ?? '' };
+              setSession(nextSession);
+              await syncShoppingList(nextSession);
+              animateTo('dashboard');
+            } catch (error) {
+              setAuthError(error instanceof Error ? error.message : 'Erro inesperado no login.');
+            } finally {
+              setAuthLoading(false);
+            }
+          }}
+        />
+      );
     }
 
     if (currentStep === 'onboarding') {
-      return <OnboardingScreen onFinish={() => animateTo('dashboard')} />;
+      return (
+        <OnboardingScreen
+          isLoading={onboardingLoading}
+          errorMessage={onboardingError}
+          onFinish={async (payload) => {
+            if (!session) {
+              setOnboardingError('Sessão inválida. Faça login novamente.');
+              return;
+            }
+            setOnboardingLoading(true);
+            setOnboardingError('');
+            try {
+              const response = await fetch(`${resolveApiBaseUrl()}/usuarios/${session.userId}/preferencias`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+              });
+              if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Falha ao salvar onboarding.');
+              }
+              await syncShoppingList(session);
+              animateTo('dashboard');
+            } catch (error) {
+              setOnboardingError(error instanceof Error ? error.message : 'Erro inesperado no onboarding.');
+            } finally {
+              setOnboardingLoading(false);
+            }
+          }}
+        />
+      );
     }
 
     if (currentStep === 'dashboard') {
-      return <DashboardScreen onOpenShoppingList={() => { animateTo('shopping-list') }} 
-      onOpenRecipes={() => { animateTo('recipes') }} />;
+      return (
+        <DashboardScreen
+          menuMeals={menuMeals}
+          isGeneratingMenu={menuLoading}
+          menuError={menuError}
+          onGenerateWeeklyMenu={generateWeeklyMenu}
+          onOpenShoppingList={() => {
+            animateTo('shopping-list');
+          }}
+          onOpenRecipes={async () => {
+            await syncRecipes();
+            animateTo('recipes');
+          }}
+        />
+      );
     }
 
-    if(currentStep === 'shopping-list') {
-      return <ShoppingListScreen onBack={() => animateTo('dashboard')} onAddProduct={() => {}} />
+    if (currentStep === 'shopping-list') {
+      return (
+        <ShoppingListScreen
+          onBack={() => animateTo('dashboard')}
+          onAddProduct={() => animateTo('add-product')}
+          onRefresh={syncShoppingList}
+          onToggleItem={async (itemId) => {
+            if (!session) {
+              return;
+            }
+            setShoppingLoading(true);
+            setShoppingError('');
+            try {
+              const response = await fetch(`${resolveApiBaseUrl()}/listas/${session.listId}/itens/${itemId}/comprado`, {
+                method: 'PATCH',
+              });
+              if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Falha ao atualizar item.');
+              }
+              const data = await response.json();
+              setShoppingItems(mapListResponseToItems(data));
+            } catch (error) {
+              setShoppingError(error instanceof Error ? error.message : 'Erro ao atualizar item.');
+            } finally {
+              setShoppingLoading(false);
+            }
+          }}
+          isLoading={shoppingLoading}
+          errorMessage={shoppingError}
+          items={shoppingItems}
+        />
+      );
     }
 
-    if(currentStep === 'recipes') {
-      return <RecipeDiscoveryScreen onBack={() => animateTo('dashboard')} />
+    if (currentStep === 'add-product') {
+      return (
+        <AddProductScreen
+          target={addTarget}
+          isLoading={addLoading}
+          errorMessage={addError}
+          onBack={() => animateTo('shopping-list')}
+          onSaveToShoppingList={async ({ name, productAmount, unit }) => {
+            if (!session) {
+              setAddError('Sessão inválida.');
+              return;
+            }
+            setAddLoading(true);
+            setAddError('');
+            try {
+              const response = await fetch(`${resolveApiBaseUrl()}/listas/${session.listId}/itens`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    nomeIngrediente: name,
+                    quantidade: Number(productAmount),
+                    unidade: normalizeUnit(unit),
+                    categoria: identifyFoodCategory(name),
+                  }),
+
+              });
+              if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Falha ao adicionar item na lista.');
+              }
+              const data = await response.json();
+              setShoppingItems(mapListResponseToItems(data));
+              animateTo('shopping-list');
+            } catch (error) {
+              setAddError(error instanceof Error ? error.message : 'Erro inesperado ao adicionar item.');
+            } finally {
+              setAddLoading(false);
+            }
+          }}
+          onSaveToFridge={() => {}}
+        />
+      );
     }
 
-    return <WelcomeScreen onPressEnter={() => animateTo('onboarding')} onPressSignUp={() => animateTo('signup')} />;
+    if (currentStep === 'recipes') {
+      return (
+        <RecipeDiscoveryScreen
+          onBack={() => animateTo('dashboard')}
+          recipes={recipes}
+          isLoading={recipesLoading}
+          errorMessage={recipesError}
+          onRefresh={syncRecipes}
+          onViewRecipe={(recipe) => {
+            setSelectedRecipe(recipe);
+            animateTo('recipe-detail');
+          }}
+        />
+      );
+    }
+
+    if (currentStep === 'recipe-detail') {
+      return (
+        <RecipeDetailScreen
+          onBack={() => animateTo('recipes')}
+          recipe={selectedRecipe}
+        />
+      );
+    }
+
+    return <WelcomeScreen onPressEnter={() => animateTo('login')} onPressSignUp={() => animateTo('signup')} />;
   };
 
   if (!transition) {

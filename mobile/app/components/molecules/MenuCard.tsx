@@ -12,6 +12,12 @@ type MenuCardProps = {
   onPressCatalog: () => void;
 };
 
+const EmptyText = sc.Text`
+  color: #575757;
+  font-size: 15px;
+  font-weight: 600;
+`;
+
 const Card = sc.View`
   width: 100%;
   border-radius: ${({ theme }) => theme.radius.lg}px;
@@ -65,15 +71,19 @@ export function MenuCard({ meals, onPressCatalog }: MenuCardProps) {
   return (
     <Card>
       <Title>Menu do dia</Title>
-      {meals.map((item) => (
-        <Row key={item.period}>
-          <Icon name="utensils" size={14} color="#111111" />
-          <TextBlock>
-            <Period>{item.period}</Period>
-            <Meal>{item.meal}</Meal>
-          </TextBlock>
-        </Row>
-      ))}
+      {meals.length === 0 ? (
+        <EmptyText>Seu menu ainda está vazio. Gere o cardápio semanal.</EmptyText>
+      ) : (
+        meals.map((item) => (
+          <Row key={`${item.period}-${item.meal}`}>
+            <Icon name="utensils" size={14} color="#111111" />
+            <TextBlock>
+              <Period>{item.period}</Period>
+              <Meal>{item.meal}</Meal>
+            </TextBlock>
+          </Row>
+        ))
+      )}
       <Button onPress={onPressCatalog}>
         <ButtonText>Ver cardápio</ButtonText>
       </Button>

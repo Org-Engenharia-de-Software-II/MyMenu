@@ -8,12 +8,21 @@ import { Dropdown } from '@/app/components/molecules/Dropdown';
 
 export type AddProductTarget = 'shopping_list' | 'fridge';
 
+type AddProductPayload = {
+  name: string;
+  productAmount: string;
+  unit: string;
+};
+
 type AddProductScreenProps = {
   target: AddProductTarget;
   onBack: () => void;
-  onSaveToShoppingList: (payload: { name: string; productAmount: string; unit: string }) => void;
-  onSaveToFridge: (payload: { name: string; productAmount: string; unit: string }) => void;
+  onSaveToShoppingList: (payload: AddProductPayload) => void;
+  onSaveToFridge: (payload: AddProductPayload) => void;
+  isLoading?: boolean;
+  errorMessage?: string;
 };
+
 
 const Container = sc.View`
   flex: 1;
@@ -56,6 +65,13 @@ const Label = sc.Text`
 
 const Footer = sc.View`
   margin-top: auto;
+  gap: 10px;
+`;
+
+const ErrorText = sc.Text`
+  color: #ffb4b4;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const unitOptions = [
@@ -64,7 +80,7 @@ const unitOptions = [
   { label: 'Litros (L)', value: 'l' },
 ];
 
-export function AddProductScreen({ target, onBack, onSaveToShoppingList, onSaveToFridge }: AddProductScreenProps) {
+export function AddProductScreen({ target, onBack, onSaveToShoppingList, onSaveToFridge, isLoading = false, errorMessage }: AddProductScreenProps) {
   const [name, setName] = useState('');
   const [productAmount, setProductAmount] = useState('');
   const [unit, setUnit] = useState('');
@@ -121,7 +137,9 @@ export function AddProductScreen({ target, onBack, onSaveToShoppingList, onSaveT
           </FieldBlock>
 
           <Footer>
-            <Button title="Adicionar" variant="coral" onPress={handleSave} />
+            {errorMessage ? <ErrorText>{errorMessage}</ErrorText> : null}
+            <Button title={isLoading ? 'Adicionando...' : 'Adicionar'} variant="coral" onPress={handleSave} />
+            <Button title="Voltar" variant="primary" onPress={onBack} />
           </Footer>
         </Content>
       </Safe>

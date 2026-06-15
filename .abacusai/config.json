@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm *)",
+      "Bash(mvn *)",
+      "Bash(mvn *)",
+      "Bash(npm *)",
+      "Bash(git *)",
+      "Bash(npm *)",
+      "Bash(npm *)",
+      "Bash(npm *)",
+      "Bash(mvn *)",
+      "Bash(npm *)",
+      "Bash(npm *)",
+      "Bash(mvn *)",
+      "Bash(npm *)",
+      "Bash(npm *)"
+    ]
+  },
+  "additionalDirectories": [
+    "/home/mumuzinho/.abacusai/tmp/codellm-prompt-qjtsAK"
+  ]
+}

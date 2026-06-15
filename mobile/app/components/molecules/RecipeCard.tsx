@@ -9,6 +9,7 @@ type RecipeCardProps = {
   time: string;
   difficulty: string;
   horizontal?: boolean;
+  children: any;
 };
 
 const Card = sc.View<{ $horizontal: boolean }>`
@@ -17,6 +18,7 @@ const Card = sc.View<{ $horizontal: boolean }>`
   background-color: ${({ theme }) => theme.colors.white};
   overflow: hidden;
   flex-direction: ${({ $horizontal }) => ($horizontal ? 'row' : 'column')};
+  padding-top: 5px;
 `;
 
 const RecipeImage = sc(Image)<{ $horizontal: boolean }>`
@@ -42,7 +44,7 @@ const BadgeRow = sc.View`
   gap: 6px;
 `;
 
-export function RecipeCard({ title, image, time, difficulty, horizontal = false }: RecipeCardProps) {
+export function RecipeCard({ title, image, time, difficulty, horizontal = false, children }: RecipeCardProps) {
   return (
     <Card $horizontal={horizontal}>
       <RecipeImage source={image} contentFit="cover" $horizontal={horizontal} />
@@ -53,6 +55,7 @@ export function RecipeCard({ title, image, time, difficulty, horizontal = false 
           <Badge text={difficulty} variant="difficulty" />
         </BadgeRow>
       </Content>
+      {children}
     </Card>
   );
 }

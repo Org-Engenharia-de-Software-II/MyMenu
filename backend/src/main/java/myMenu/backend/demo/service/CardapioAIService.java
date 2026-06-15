@@ -3,6 +3,7 @@ package myMenu.backend.demo.service;
 import myMenu.backend.demo.model.Receita;
 import myMenu.backend.demo.model.Usuario;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,11 +13,16 @@ public class CardapioAIService {
 
     private final ChatClient chatClient;
 
-    public CardapioAIService(ChatClient.Builder chatClientBuilder) {
-        this.chatClient = chatClientBuilder.build();
+    public CardapioAIService(ObjectProvider<ChatClient.Builder> chatClientBuilderProvider) {
+        ChatClient.Builder chatClientBuilder = chatClientBuilderProvider.getIfAvailable();
+        this.chatClient = chatClientBuilder != null ? chatClientBuilder.build() : null;
     }
 
     public String gerarSugestaoSemanal(Usuario usuario, List<Receita> candidatas) {
+        if (chatClient == null) {
+            throw new IllegalStateException("Serviço de IA desativado. Configure OpenAI para habilitar geração de cardápio.");
+        }
+
         String catalogo = construirCatalogo(candidatas);
         
         String objetivo = usuario.getObjetivo() != null ? usuario.getObjetivo() : "Alimentação saudável";
