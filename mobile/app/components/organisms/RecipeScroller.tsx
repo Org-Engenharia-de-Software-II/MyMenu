@@ -13,6 +13,7 @@ type Recipe = {
 type RecipeScrollerProps = {
   title: string;
   recipes: Recipe[];
+  onPressRecipe?: (recipe: Recipe) => void;
 };
 
 const Container = sc.View`
@@ -34,7 +35,7 @@ const Row = sc.View`
   gap: 10px;
 `;
 
-export function RecipeScroller({ title, recipes }: RecipeScrollerProps) {
+export function RecipeScroller({ title, recipes, onPressRecipe }: RecipeScrollerProps) {
   return (
     <Container>
       <Title>{title}</Title>
@@ -47,6 +48,7 @@ export function RecipeScroller({ title, recipes }: RecipeScrollerProps) {
               image={recipe.image}
               time={recipe.time}
               difficulty={recipe.difficulty}
+              onPress={onPressRecipe ? () => onPressRecipe(recipe) : undefined}
             />
           ))}
         </Row>

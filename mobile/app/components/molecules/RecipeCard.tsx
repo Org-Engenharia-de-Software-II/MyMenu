@@ -10,9 +10,10 @@ type RecipeCardProps = {
   difficulty: string;
   horizontal?: boolean;
   children?: any;
+  onPress?: () => void;
 };
 
-const Card = sc.View<{ $horizontal: boolean }>`
+const Card = sc.Pressable<{ $horizontal: boolean }>`
   width: ${({ $horizontal }) => ($horizontal ? '100%' : '122px')};
   border-radius: ${({ theme }) => theme.radius.sm}px;
   background-color: ${({ theme }) => theme.colors.white};
@@ -44,9 +45,9 @@ const BadgeRow = sc.View`
   gap: 6px;
 `;
 
-export function RecipeCard({ title, image, time, difficulty, horizontal = false, children }: RecipeCardProps) {
+export function RecipeCard({ title, image, time, difficulty, horizontal = false, children, onPress }: RecipeCardProps) {
   return (
-    <Card $horizontal={horizontal}>
+    <Card $horizontal={horizontal} onPress={onPress}>
       <RecipeImage source={image} contentFit="cover" $horizontal={horizontal} />
       <Content>
         <Title numberOfLines={2}>{title}</Title>

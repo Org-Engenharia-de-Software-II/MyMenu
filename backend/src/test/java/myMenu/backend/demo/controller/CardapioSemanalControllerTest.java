@@ -50,4 +50,23 @@ class CardapioSemanalControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Receitas insuficientes para as suas restrições e perfil."));
     }
+
+    @Test
+    void deveAdicionarItemAoCardapioComSucesso() throws Exception {
+        CardapioSemanal cardapio = new CardapioSemanal();
+        when(cardapioSemanalService.adicionarItemAoCardapio(1L, 7L, null, null)).thenReturn(cardapio);
+
+        mockMvc.perform(post("/usuarios/1/cardapio/itens")
+                        .contentType("application/json")
+                        .content("{\"receitaId\":7}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void deveRemoverItemDoCardapioComSucesso() throws Exception {
+        doNothing().when(cardapioSemanalService).removerItemDoCardapio(1L, 2L, 3L);
+
+        mockMvc.perform(delete("/usuarios/1/cardapio/2/itens/3"))
+                .andExpect(status().isNoContent());
+    }
 }

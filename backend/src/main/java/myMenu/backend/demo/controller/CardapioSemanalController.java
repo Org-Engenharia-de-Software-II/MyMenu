@@ -1,6 +1,7 @@
 package myMenu.backend.demo.controller;
 
 import lombok.RequiredArgsConstructor;
+import myMenu.backend.demo.dto.AdicionarItemCardapioDTO;
 import myMenu.backend.demo.model.CardapioSemanal;
 import myMenu.backend.demo.service.CardapioSemanalService;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,34 @@ public class CardapioSemanalController {
     public ResponseEntity<?> deletarCardapio(@PathVariable Long usuarioId, @PathVariable Long cardapioId) {
         try {
             cardapioSemanalService.deletarCardapio(usuarioId, cardapioId);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/itens")
+    public ResponseEntity<?> adicionarItemAoCardapio(@PathVariable Long usuarioId,
+                                                     @RequestBody AdicionarItemCardapioDTO dto) {
+        try {
+            CardapioSemanal cardapio = cardapioSemanalService.adicionarItemAoCardapio(
+                    usuarioId,
+                    dto.receitaId(),
+                    dto.diaDaSemana(),
+                    dto.tipoRefeicao()
+            );
+            return ResponseEntity.ok(cardapio);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{cardapioId}/itens/{itemCardapioId}")
+    public ResponseEntity<?> removerItemDoCardapio(@PathVariable Long usuarioId,
+                                                   @PathVariable Long cardapioId,
+                                                   @PathVariable Long itemCardapioId) {
+        try {
+            cardapioSemanalService.removerItemDoCardapio(usuarioId, cardapioId, itemCardapioId);
             return ResponseEntity.noContent().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

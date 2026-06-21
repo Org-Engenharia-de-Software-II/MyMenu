@@ -296,7 +296,11 @@ export function RecipeDiscoveryScreen({
             </FilterContent>
           </FilterRow>
 
-          <RecipeScroller title="Recomendados para você" recipes={list.slice(0, 10)} />
+          <RecipeScroller
+            title="Recomendados para você"
+            recipes={list.slice(0, 10)}
+            onPressRecipe={onViewRecipe}
+          />
 
           <Section>
             <SectionTitle>Mais receitas</SectionTitle>
@@ -314,6 +318,7 @@ export function RecipeDiscoveryScreen({
                     image={recipe.image}
                     time={recipe.time}
                     difficulty={recipe.difficulty}
+                    onPress={() => onViewRecipe(recipe)}
                   />
                   <ViewRecipeButton onPress={() => onViewRecipe(recipe)}>
                     <Badge text="Visualizar receita" variant="activeFilter" />

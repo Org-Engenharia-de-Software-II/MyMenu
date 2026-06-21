@@ -25,10 +25,15 @@ type CardapioItem = {
 type WeeklyMenuScreenProps = {
   userId: number;
   apiBaseUrl: string;
-  onOpenRecipe?: () => void;
   onOpenFilters?: () => void;
   onGenerateMenu?: () => void;
-  onViewDetails?: (cardapio: CardapioItem) => void;
+  onViewDetails?: (receita: {
+    id: string;
+    title: string;
+    image: string;
+    time: string;
+    difficulty: string;
+  }) => void;
   onBack?: () => void;
 };
 
@@ -136,7 +141,6 @@ const BackButton = sc.Pressable``;
 export function WeeklyMenuScreen({
   userId,
   apiBaseUrl,
-  onOpenRecipe,
   onOpenFilters,
   onGenerateMenu,
   onViewDetails,
@@ -146,7 +150,6 @@ export function WeeklyMenuScreen({
   const [cardapios, setCardapios] = useState<CardapioItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [recipes, setRecipes] = useState<any[]>([]);
 
   const loadCardapios = useCallback(async () => {
     setIsLoading(true);
@@ -158,7 +161,11 @@ export function WeeklyMenuScreen({
         throw new Error(errorText || 'Falha ao carregar cardápios.');
       }
       const data = await response.json();
-      setCardapios(Array.isArray(data) ? data : []);
+      setCardapios(
+        Array.isArray(data)
+          ? [...data].sort((a, b) => new Date(b.dataInicio ?? 0).getTime() - new Date(a.dataInicio ?? 0).getTime())
+          : []
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar cardápios.');
     } finally {
@@ -171,25 +178,24 @@ export function WeeklyMenuScreen({
   }, [loadCardapios]);
 
   const getRecipesForDay = (cardapio: CardapioItem) => {
-    console.log(day)
-    console.log(
-      cardapio.itensCardapio.
-    filter(i => i.diaDaSemana.substring(0, 3) == day)
+    return cardapio.itensCardapio
+      .filter((item) => item.diaDaSemana?.substring(0, 3).toUpperCase() === day)
       .map((item) => ({
+        itemId: item.id,
+        cardapioId: cardapio.id,
         id: `${cardapio.id}-${item.id}`,
         title: item.receita.nome,
         image: item.receita.imagemUrl || 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=60',
         meta: item.tipoRefeicao,
-      }))
-    )
-
-    return cardapio.itensCardapio.
-    filter(i => i.diaDaSemana.substring(0, 3) == day)
-      .map((item) => ({
-        id: `${cardapio.id}-${item.id}`,
-        title: item.receita.nome,
-        image: item.receita.imagemUrl || 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=60',
-        meta: item.tipoRefeicao,
+        difficulty: item.tipoRefeicao,
+        time: item.diaDaSemana,
+        recipe: {
+          id: String(item.receita.id),
+          title: item.receita.nome,
+          image: item.receita.imagemUrl || 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=60',
+          time: item.tipoRefeicao,
+          difficulty: item.diaDaSemana,
+        },
       }));
   };
 
@@ -199,17 +205,18 @@ export function WeeklyMenuScreen({
     }
   };
 
-  const handleDeleteCardapio = async (cardapioId: number) => {
+  const handleDeleteItem = async (cardapioId: number, itemId: number) => {
     try {
-      const response = await fetch(`${apiBaseUrl}/usuarios/${userId}/cardapio/${cardapioId}`, {
+      const response = await fetch(`${apiBaseUrl}/usuarios/${userId}/cardapio/${cardapioId}/itens/${itemId}`, {
         method: 'DELETE',
       });
       if (!response.ok) {
-        throw new Error('Falha ao deletar cardápio.');
+        const errorText = await response.text();
+        throw new Error(errorText || 'Falha ao remover item do cardápio.');
       }
       await loadCardapios();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao deletar cardápio.');
+      setError(err instanceof Error ? err.message : 'Erro ao remover item do cardápio.');
     }
   };
 
@@ -311,10 +318,10 @@ export function WeeklyMenuScreen({
                     meta={recipe.meta}
                     onView={() => {
                       if (onViewDetails) {
-                        onViewDetails(cardapios[0]);
+                        onViewDetails(recipe.recipe);
                       }
                     }}
-                    onDelete={() => handleDeleteCardapio(cardapios[0].id)}
+                    onDelete={() => handleDeleteItem(recipe.cardapioId, recipe.itemId)}
                   />
                 ))
               }

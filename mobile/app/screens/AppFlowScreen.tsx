@@ -83,19 +83,21 @@ export function AppFlowScreen() {
   const [menuMeals, setMenuMeals] = useState<MealEntry[]>([]);
   const [recipes, setRecipes] = useState<RecipeItem[]>([]);
   const [selectedRecipe, setSelectedRecipe] = useState<SelectedRecipe>(null);
-  const [selectedCardapio, setSelectedCardapio] = useState<any>(null);
+  const [recipeDetailBackStep, setRecipeDetailBackStep] = useState<FlowStep>('recipes');
   const addTarget: AddProductTarget = 'shopping_list';
   const [authLoading, setAuthLoading] = useState(false);
   const [onboardingLoading, setOnboardingLoading] = useState(false);
   const [shoppingLoading, setShoppingLoading] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
   const [menuLoading, setMenuLoading] = useState(false);
+  const [recipeActionLoading, setRecipeActionLoading] = useState(false);
   const [recipesLoading, setRecipesLoading] = useState(false);
   const [authError, setAuthError] = useState('');
   const [onboardingError, setOnboardingError] = useState('');
   const [shoppingError, setShoppingError] = useState('');
   const [addError, setAddError] = useState('');
   const [menuError, setMenuError] = useState('');
+  const [recipeActionError, setRecipeActionError] = useState('');
   const [recipesError, setRecipesError] = useState('');
   const progress = useRef(new Animated.Value(0)).current;
   const isTransitioning = useRef(false);
@@ -164,8 +166,6 @@ export function AppFlowScreen() {
     return unit;
   }, []);
 
-  const apiBaseUrl = resolveApiBaseUrl();
-
   const resolveUserListId = useCallback(async (userId: number): Promise<number> => {
     const response = await fetch(`${resolveApiBaseUrl()}/listas/usuario/${userId}`);
     if (!response.ok) {
@@ -225,38 +225,30 @@ export function AppFlowScreen() {
     }
   }, [mapRecipe, resolveApiBaseUrl, session]);
 
+  const getLatestCardapio = useCallback((cardapios: any[]) => {
+    if (!Array.isArray(cardapios) || cardapios.length === 0) {
+      return null;
+    }
+
+    return [...cardapios].sort((a, b) => {
+      const left = new Date(b?.dataInicio ?? 0).getTime();
+      const right = new Date(a?.dataInicio ?? 0).getTime();
+      return left - right;
+    })[0] ?? null;
+  }, []);
+
   const getTodayDayAbbreviation = useCallback((): string => {
     const days = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
     const today = new Date().getDay();
     return days[today];
   }, []);
 
-  useEffect(() => {
-    async function fetchCardapios() {
-      console.log("carregando");
-      try {
-        const response = await fetch(`${resolveApiBaseUrl()}/usuarios/${session?.userId}/cardapio`);
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(errorText || 'Falha ao carregar cardápios.');
-        }
-        const data = await response.json();
-        console.log(data)
-        setMenuMeals(mapMenuItems(data[0].itensCardapio || []));
-      } catch (err) {
-        console.log(err instanceof Error ? err.message : 'Erro ao carregar cardápios.');
-      } finally {
-        console.log("carregado");
-      }
-    }
-
-    fetchCardapios();
-  }, [resolveApiBaseUrl, session?.userId]);
-
   const mapMenuItems = useCallback((items: BackendMealItem[]): MealEntry[] => {
     const refeicoes = ['café da manhã', 'almoço', 'jantar'];
     const todayDay = getTodayDayAbbreviation();
-
+    console.log("Unfiltered: ", items)
+    console.log("Filtered: ", items
+      .filter((item) => item.receita?.nome && item.diaDaSemana?.substring(0, 3).toUpperCase() === todayDay))
     return items
       .filter((item) => item.receita?.nome && item.diaDaSemana?.substring(0, 3).toUpperCase() === todayDay)
       .sort((a, b) => {
@@ -269,6 +261,32 @@ export function AppFlowScreen() {
         meal: item.receita?.nome ?? '',
       }));
   }, [getTodayDayAbbreviation]);
+
+  useEffect(() => {
+    if (!session?.userId) {
+      setMenuMeals([]);
+      return;
+    }
+
+    const userId = session.userId;
+
+    async function fetchCardapios() {
+      try {
+        const response = await fetch(`${resolveApiBaseUrl()}/usuarios/${userId}/cardapio`);
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || 'Falha ao carregar cardápios.');
+        }
+        const data = await response.json();
+        const latestCardapio = getLatestCardapio(data);
+        setMenuMeals(mapMenuItems(latestCardapio?.itensCardapio || []));
+      } catch (err) {
+        setMenuError(err instanceof Error ? err.message : 'Erro ao carregar cardápios.');
+      }
+    }
+
+    fetchCardapios();
+  }, [getLatestCardapio, mapMenuItems, resolveApiBaseUrl, session?.userId]);
 
   const generateWeeklyMenu = useCallback(async () => {
     if (!session) {
@@ -298,6 +316,41 @@ export function AppFlowScreen() {
       setMenuLoading(false);
     }
   }, [animateTo, mapMenuItems, resolveApiBaseUrl, session, syncRecipes]);
+
+  const addRecipeToMenu = useCallback(async (recipe: RecipeItem, day: string) => {
+    if (!session) {
+      setRecipeActionError('Sessão inválida. Faça login novamente.');
+      return;
+    }
+
+    setRecipeActionLoading(true);
+    setRecipeActionError('');
+
+    try {
+      const response = await fetch(`${resolveApiBaseUrl()}/usuarios/${session.userId}/cardapio/itens`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          receitaId: Number(recipe.id),
+          diaDaSemana: day,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Falha ao adicionar receita ao cardápio.');
+      }
+
+      const cardapio = await response.json();
+      const itens = Array.isArray(cardapio?.itensCardapio) ? cardapio.itensCardapio : [];
+      setMenuMeals(mapMenuItems(itens));
+      animateTo('weekly-menu');
+    } catch (error) {
+      setRecipeActionError(error instanceof Error ? error.message : 'Erro inesperado ao adicionar receita ao cardápio.');
+    } finally {
+      setRecipeActionLoading(false);
+    }
+  }, [animateTo, mapMenuItems, resolveApiBaseUrl, session]);
 
   const syncShoppingList = useCallback(async (sessionData?: Session) => {
     const currentSession = sessionData ?? session;
@@ -547,6 +600,7 @@ export function AppFlowScreen() {
           onRefresh={syncRecipes}
           onViewRecipe={(recipe) => {
             setSelectedRecipe(recipe);
+            setRecipeDetailBackStep('recipes');
             animateTo('recipe-detail');
           }}
         />
@@ -556,8 +610,11 @@ export function AppFlowScreen() {
     if (currentStep === 'recipe-detail') {
       return (
         <RecipeDetailScreen
-          onBack={() => animateTo('recipes')}
+          onBack={() => animateTo(recipeDetailBackStep)}
           recipe={selectedRecipe}
+          onAddToMenu={addRecipeToMenu}
+          isAddingToMenu={recipeActionLoading}
+          addToMenuError={recipeActionError}
         />
       );
     }
@@ -569,8 +626,10 @@ export function AppFlowScreen() {
           apiBaseUrl={resolveApiBaseUrl()}
           onOpenFilters={() => {}}
           onGenerateMenu={generateWeeklyMenu}
-          onViewDetails={(cardapio) => {
-            setSelectedCardapio(cardapio);
+          onViewDetails={(recipe) => {
+            setSelectedRecipe(recipe);
+            setRecipeDetailBackStep('weekly-menu');
+            animateTo('recipe-detail');
           }}
           onBack={() => animateTo('dashboard')}
         />

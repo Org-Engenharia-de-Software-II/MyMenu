@@ -6,9 +6,11 @@ import static org.mockito.Mockito.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import myMenu.backend.demo.model.CardapioSemanal;
+import myMenu.backend.demo.model.ItemCardapio;
 import myMenu.backend.demo.model.Receita;
 import myMenu.backend.demo.model.Usuario;
 import myMenu.backend.demo.repository.CardapioSemanalRepository;
+import myMenu.backend.demo.repository.ItemCardapioRepository;
 import myMenu.backend.demo.repository.ReceitaRepository;
 import myMenu.backend.demo.repository.UsuarioRepository;
 import org.junit.jupiter.api.Test;
@@ -22,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 @ExtendWith(MockitoExtension.class)
 class CardapioSemanalServiceTest {
@@ -30,6 +33,7 @@ class CardapioSemanalServiceTest {
     @Mock private CardapioAIService aiService;
     @Mock private ReceitaRepository receitaRepository;
     @Mock private CardapioSemanalRepository cardapioRepository;
+    @Mock private ItemCardapioRepository itemCardapioRepository;
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private ObjectMapper objectMapper;
 
@@ -72,7 +76,7 @@ class CardapioSemanalServiceTest {
 
         when(receitaService.buscarCandidatasParaCardapio(usuarioMock)).thenReturn(receitasDisponiveis);
 
-        String fakeJson = "JSON";
+        String fakeJson = "[{\"receitaId\":1,\"dia\":\"SEGUNDA\",\"refeicao\":\"ALMOCO\"}]";
         when(aiService.gerarSugestaoSemanal(usuarioMock, receitasDisponiveis)).thenReturn(fakeJson);
 
         // Simulando a conversão do ObjectMapper
@@ -85,7 +89,16 @@ class CardapioSemanalServiceTest {
 
         when(objectMapper.readValue(anyString(), any(TypeReference.class))).thenReturn(mockConvertido);
         when(receitaRepository.findById(1L)).thenReturn(Optional.of(new Receita()));
-        when(cardapioRepository.save(any())).thenAnswer(i -> i.getArguments()[0]);
+        when(itemCardapioRepository.save(any(ItemCardapio.class))).thenAnswer(i -> i.getArgument(0));
+        AtomicLong cardapioId = new AtomicLong(10L);
+        CardapioSemanal cardapioSalvo = new CardapioSemanal();
+        cardapioSalvo.setId(10L);
+        when(cardapioRepository.save(any())).thenAnswer(i -> {
+            CardapioSemanal cardapio = i.getArgument(0);
+            cardapio.setId(cardapioId.get());
+            return cardapio;
+        });
+        when(cardapioRepository.findById(10L)).thenReturn(Optional.of(cardapioSalvo));
 
         CardapioSemanal gerado = cardapioSemanalService.gerarCardapio(1L);
 
