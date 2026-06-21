@@ -4,9 +4,10 @@ import { Icon } from '@/app/components/atoms/Icon';
 
 type FABProps = {
   onPress: () => void;
+  disabled?: boolean;
 };
 
-const Button = sc.Pressable`
+const Button = sc.Pressable<{ $disabled?: boolean }>`
   width: 52px;
   height: 52px;
   border-radius: 26px;
@@ -18,11 +19,12 @@ const Button = sc.Pressable`
   shadow-opacity: 1;
   shadow-radius: 0px;
   elevation: 4;
+  opacity: ${({ $disabled }) => ($disabled ? 0.7 : 1)};
 `;
 
-export function FAB({ onPress }: FABProps) {
+export function FAB({ onPress, disabled }: FABProps) {
   return (
-    <Button onPress={onPress}>
+    <Button onPress={onPress} $disabled={disabled} disabled={disabled}>
       <Icon name="plus" color="#FFFFFF" size={28} strokeWidth={2.8} />
     </Button>
   );
