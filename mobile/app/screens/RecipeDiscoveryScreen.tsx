@@ -320,9 +320,9 @@ export function RecipeDiscoveryScreen({
                     difficulty={recipe.difficulty}
                     onPress={() => onViewRecipe(recipe)}
                   />
-                  <ViewRecipeButton onPress={() => onViewRecipe(recipe)}>
+                  {/* <ViewRecipeButton onPress={() => onViewRecipe(recipe)}>
                     <Badge text="Visualizar receita" variant="activeFilter" />
-                  </ViewRecipeButton>
+                  </ViewRecipeButton> */}
                 </RecipeItem>
               ))}
             </List>

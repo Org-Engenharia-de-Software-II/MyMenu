@@ -1,3 +1,4 @@
+import React from 'react';
 import sc from 'styled-components/native';
 
 import { Icon } from '@/app/components/atoms/Icon';
@@ -16,6 +17,7 @@ type DashboardScreenProps = {
   menuMeals: MealEntry[];
   isGeneratingMenu?: boolean;
   menuError?: string;
+  name?: string;
 };
 
 const Container = sc.View`
@@ -133,6 +135,7 @@ export function DashboardScreen({
   menuMeals,
   isGeneratingMenu = false,
   menuError,
+  name = 'Usuário',
 }: DashboardScreenProps) {
 
   return (
@@ -141,7 +144,7 @@ export function DashboardScreen({
         <Scroll>
           <Content>
             <Header>
-              <Title>Olá, Murilo!</Title>
+              <Title>Olá, {name}!</Title>
               <Subtitle>Preparado para organizar a semana?</Subtitle>
             </Header>
 

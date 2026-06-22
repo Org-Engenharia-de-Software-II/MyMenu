@@ -30,19 +30,20 @@ const RecipeImage = sc(Image)<{ $horizontal: boolean }>`
 const Content = sc.View`
   flex: 1;
   padding: 8px;
-  gap: 6px;
+  gap: 2px;
 `;
 
 const Title = sc.Text`
   color: ${({ theme }) => theme.colors.textDark};
   font-size: 13px;
   font-weight: 800;
+  line-height: 18px;
 `;
 
 const BadgeRow = sc.View`
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 10px;
 `;
 
 export function RecipeCard({ title, image, time, difficulty, horizontal = false, children, onPress }: RecipeCardProps) {
