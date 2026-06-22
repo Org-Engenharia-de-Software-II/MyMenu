@@ -5,12 +5,13 @@ on:
   push:
     branches:
       - master
-
+      - murilo
     paths:
       - 'mobile/**'
   pull_request:
     branches:
       - master
+      - murilo
     paths:
       - 'mobile/**'
 

@@ -1,5 +1,6 @@
 package myMenu.backend.demo.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
@@ -21,6 +22,7 @@ public class ListaDeCompras {
     @Column(nullable = false)
     private LocalDate dataCriacao = LocalDate.now();
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;

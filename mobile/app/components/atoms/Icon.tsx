@@ -40,7 +40,8 @@ type IconName =
   | 'filter'
   | 'list'
   | 'eye'
-  | 'arrowRight';
+  | 'arrowRight'
+  | 'calendar';
 
 type IconProps = LucideProps & {
   name: IconName;
@@ -66,6 +67,7 @@ const iconMap: Record<IconName, LucideIcon> = {
   list: ClipboardList,
   eye: Eye,
   arrowRight: ChevronRight,
+  calendar: ChevronRight, // You can replace this with an actual calendar icon if available
 };
 
 export function Icon({ name, ...props }: IconProps) {

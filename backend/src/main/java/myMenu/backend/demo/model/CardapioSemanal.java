@@ -49,4 +49,8 @@ public class CardapioSemanal {
         );
     }
 
+    public void removerItemPorId(Long itemId) {
+        this.itensCardapio.removeIf(item -> item.getId() != null && item.getId().equals(itemId));
+    }
+
 }

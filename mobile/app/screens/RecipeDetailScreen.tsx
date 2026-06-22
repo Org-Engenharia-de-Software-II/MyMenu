@@ -1,12 +1,26 @@
 import { Image } from 'expo-image';
+import { useState } from 'react';
 import sc from 'styled-components/native';
 
 import { FAB } from '@/app/components/atoms/FAB';
 import { Icon } from '@/app/components/atoms/Icon';
+import { Dropdown } from '@/app/components/molecules/Dropdown';
 import { RecipeInstructions } from '@/app/components/organisms/RecipeInstructions';
+
+type Recipe = {
+  id: string;
+  title: string;
+  image: string;
+  time: string;
+  difficulty: string;
+};
 
 type RecipeDetailScreenProps = {
   onBack: () => void;
+  recipe?: Recipe | null;
+  onAddToMenu?: (recipe: Recipe, day: string) => void;
+  isAddingToMenu?: boolean;
+  addToMenuError?: string;
 };
 
 const Container = sc.View`
@@ -79,6 +93,18 @@ const FabWrap = sc.View`
   bottom: 30px;
 `;
 
+const ErrorText = sc.Text`
+  color: #b54848;
+  font-size: 14px;
+  font-weight: 700;
+`;
+
+const HelpText = sc.Text`
+  color: #575757;
+  font-size: 14px;
+  font-weight: 600;
+`;
+
 const ingredients = ['Massa para tacos', 'Peito de frango em cubos', 'Alface', 'Queijo ralado'];
 
 const instructions = [
@@ -89,11 +115,24 @@ const instructions = [
 
 const nutrition = ['550 kcal', '15 g proteína', '50 g carboidrato', '10 g gordura', '5 mg vitamina B'];
 
-export function RecipeDetailScreen({ onBack }: RecipeDetailScreenProps) {
+export function RecipeDetailScreen({ onBack, recipe, onAddToMenu, isAddingToMenu = false, addToMenuError }: RecipeDetailScreenProps) {
+  const [selectedDay, setSelectedDay] = useState('');
+  const heroImage = recipe?.image ?? 'https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?auto=format&fit=crop&w=1200&q=60';
+  const title = recipe?.title ?? 'Tacos de frango';
+  const dayOptions = [
+    { label: 'Segunda-feira', value: 'SEG' },
+    { label: 'Terça-feira', value: 'TER' },
+    { label: 'Quarta-feira', value: 'QUA' },
+    { label: 'Quinta-feira', value: 'QUI' },
+    { label: 'Sexta-feira', value: 'SEX' },
+    { label: 'Sábado', value: 'SAB' },
+    { label: 'Domingo', value: 'DOM' },
+  ];
+
   return (
     <Container>
       <Hero
-        source="https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?auto=format&fit=crop&w=1200&q=60"
+        source={heroImage}
         contentFit="cover"
       />
       <BackButton onPress={onBack}>
@@ -103,9 +142,20 @@ export function RecipeDetailScreen({ onBack }: RecipeDetailScreenProps) {
       <Content>
         <Body>
           <HeaderRow>
-            <Title>Tacos de frango</Title>
-            <Icon name="back" size={20} color="#E8E8E8" />
+            <Title>{title}</Title>
+            {recipe && onAddToMenu ? <Icon name="plus" size={20} color="#E8E8E8" /> : null}
           </HeaderRow>
+
+          {addToMenuError ? <ErrorText>{addToMenuError}</ErrorText> : null}
+
+          <Dropdown
+            label="Dia para adicionar ao cardápio"
+            placeholder="Selecione o dia"
+            options={dayOptions}
+            value={selectedDay}
+            onChange={setSelectedDay}
+          />
+          <HelpText>Escolha o dia antes de salvar a receita no cardápio.</HelpText>
 
           <SectionTitle>Ingredientes</SectionTitle>
           <BulletList>
@@ -127,7 +177,14 @@ export function RecipeDetailScreen({ onBack }: RecipeDetailScreenProps) {
       </Content>
 
       <FabWrap>
-        <FAB onPress={() => {}} />
+        <FAB
+          onPress={() => {
+            if (recipe && onAddToMenu && selectedDay) {
+              onAddToMenu(recipe, selectedDay);
+            }
+          }}
+          disabled={!recipe || !onAddToMenu || !selectedDay || isAddingToMenu}
+        />
       </FabWrap>
     </Container>
   );

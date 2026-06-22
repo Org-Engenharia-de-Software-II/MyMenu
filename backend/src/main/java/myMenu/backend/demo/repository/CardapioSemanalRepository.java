@@ -8,4 +8,5 @@ import java.util.List;
 @Repository
 public interface CardapioSemanalRepository extends JpaRepository<CardapioSemanal, Long> {
     List<CardapioSemanal> findByUsuarioId(Long usuarioId);
+    CardapioSemanal findTopByUsuarioIdOrderByDataInicioDesc(Long usuarioId);
 }

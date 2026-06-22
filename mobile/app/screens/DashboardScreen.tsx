@@ -3,6 +3,21 @@ import sc from 'styled-components/native';
 import { Icon } from '@/app/components/atoms/Icon';
 import { MenuCard } from '@/app/components/molecules/MenuCard';
 
+type MealEntry = {
+  period: string;
+  meal: string;
+};
+
+type DashboardScreenProps = {
+  onOpenShoppingList: () => void;
+  onOpenRecipes: () => void;
+  onOpenWeeklyMenu: () => void;
+  onGenerateWeeklyMenu: () => void;
+  menuMeals: MealEntry[];
+  isGeneratingMenu?: boolean;
+  menuError?: string;
+};
+
 const Container = sc.View`
   flex: 1;
   background-color: ${({ theme }) => theme.colors.background};
@@ -54,7 +69,7 @@ const ActionCard = sc.Pressable`
 
 const ActionText = sc.Text`
   color: ${({ theme }) => theme.colors.textDark};
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 700;
   text-align: center;
 `;
@@ -104,18 +119,22 @@ const ActivityTime = sc.Text`
   font-size: 12px;
 `;
 
-type DashboardScreenProps = {
-  onOpenShoppingList: () => void;
-  onOpenRecipes: () => void;
-};
+const ErrorText = sc.Text`
+  color: #ffb4b4;
+  font-size: 13px;
+  font-weight: 600;
+`;
 
-const meals = [
-  { period: 'Café da manhã', meal: 'Pão com presunto e queijo' },
-  { period: 'Almoço', meal: 'Arroz e feijão' },
-  { period: 'Jantar', meal: 'Miojo com requeijão' },
-];
+export function DashboardScreen({
+  onOpenShoppingList,
+  onOpenRecipes,
+  onOpenWeeklyMenu,
+  onGenerateWeeklyMenu,
+  menuMeals,
+  isGeneratingMenu = false,
+  menuError,
+}: DashboardScreenProps) {
 
-export function DashboardScreen({ onOpenShoppingList, onOpenRecipes }: DashboardScreenProps) {
   return (
     <Container>
       <Safe>
@@ -126,7 +145,7 @@ export function DashboardScreen({ onOpenShoppingList, onOpenRecipes }: Dashboard
               <Subtitle>Preparado para organizar a semana?</Subtitle>
             </Header>
 
-            <MenuCard meals={meals} onPressCatalog={onOpenRecipes} />
+            <MenuCard meals={menuMeals} onPressCatalog={onOpenWeeklyMenu} />
 
             <ActionRow>
               <ActionCard onPress={onOpenShoppingList}>
@@ -137,11 +156,16 @@ export function DashboardScreen({ onOpenShoppingList, onOpenRecipes }: Dashboard
                 <Icon name="search" size={24} color="#1A1A1A" />
                 <ActionText>Descobrir receitas</ActionText>
               </ActionCard>
+              {/* <ActionCard onPress={onOpenWeeklyMenu}>
+                <Icon name="calendar" size={24} color="#1A1A1A" />
+                <ActionText>Menu semanal</ActionText>
+              </ActionCard> */}
             </ActionRow>
 
-            <CTA onPress={onOpenRecipes}>
-              <CTAText>Gerar cardápio semanal</CTAText>
+            <CTA onPress={onGenerateWeeklyMenu}>
+              <CTAText>{isGeneratingMenu ? 'Gerando cardápio...' : 'Gerar cardápio semanal'}</CTAText>
             </CTA>
+            {menuError ? <ErrorText>{menuError}</ErrorText> : null}
 
             <SectionTitle>Atividades recentes</SectionTitle>
             <ActivityList>
