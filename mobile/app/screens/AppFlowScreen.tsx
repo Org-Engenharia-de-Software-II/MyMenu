@@ -273,6 +273,7 @@ export function AppFlowScreen() {
     async function fetchCardapios() {
       try {
         const response = await fetch(`${resolveApiBaseUrl()}/usuarios/${userId}/cardapio`);
+        console.log("RESPONSE CARDAPIO", response)
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(errorText || 'Falha ao carregar cardápios.');

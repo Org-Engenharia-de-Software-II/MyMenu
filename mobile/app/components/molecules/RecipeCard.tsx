@@ -29,8 +29,8 @@ const RecipeImage = sc(Image)<{ $horizontal: boolean }>`
 
 const Content = sc.View`
   flex: 1;
-  padding: 8px;
-  gap: 2px;
+  padding: 22px;
+  gap: 8px;
 `;
 
 const Title = sc.Text`
