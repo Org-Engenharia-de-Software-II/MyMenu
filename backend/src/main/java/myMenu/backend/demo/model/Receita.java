@@ -41,6 +41,27 @@ public class Receita {
     private double gordura;
 
     public boolean atendeRestricoesAlimentares(List<String> restricoes, List<String> ingredientesEvitados) {
+        if (restricoes != null && !restricoes.isEmpty()) {
+            for (String restricao : restricoes) {
+                String restricaoLower = restricao.toLowerCase();
+                
+                if (restricaoLower.contains("vegano")) {
+                    for (ItemReceita item : this.itens) {
+                        if (isCarneOuPeixe(item.getIngrediente().getNome()) || 
+                            isOvoOuLaticinios(item.getIngrediente().getNome())) {
+                            return false;
+                        }
+                    }
+                } else if (restricaoLower.contains("vegetariano")) {
+                    for (ItemReceita item : this.itens) {
+                        if (isCarneOuPeixe(item.getIngrediente().getNome())) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
         if (ingredientesEvitados != null && !ingredientesEvitados.isEmpty()) {
             for (ItemReceita item : this.itens) {
                 boolean temEvitado = ingredientesEvitados.stream()
@@ -52,6 +73,27 @@ public class Receita {
         }
 
         return true;
+    }
+
+    private boolean isCarneOuPeixe(String ingrediente) {
+        String lower = ingrediente.toLowerCase();
+        return lower.contains("carne") || lower.contains("frango") || lower.contains("peixe") ||
+               lower.contains("pesca") || lower.contains("camarão") || lower.contains("camarao") ||
+               lower.contains("polvo") || lower.contains("lula") || lower.contains("marisco") ||
+               lower.contains("presunto") || lower.contains("bacon") || lower.contains("linguiça") ||
+               lower.contains("embutido") || lower.contains("caldo de carne") || lower.contains("peru") ||
+               lower.contains("cordeiro") || lower.contains("vaca") || lower.contains("boi") ||
+               lower.contains("vitela") || lower.contains("costela") || lower.contains("file") ||
+               lower.contains("caldo de galinha") || lower.contains("caldo de peixe");
+    }
+
+    private boolean isOvoOuLaticinios(String ingrediente) {
+        String lower = ingrediente.toLowerCase();
+        return lower.contains("ovo") || lower.contains("leite") || lower.contains("queijo") ||
+               lower.contains("iogurte") || lower.contains("iogurt") || lower.contains("butter") ||
+               lower.contains("manteiga") || lower.contains("creme") || lower.contains("nata") ||
+               lower.contains("requeijão") || lower.contains("requeijao") || lower.contains("coalhada") ||
+               lower.contains("lácteo") || lower.contains("lacteo");
     }
 
     public boolean possuiTodosIngredientes(Geladeira geladeira) {
