@@ -132,6 +132,8 @@ public class CardapioSemanalService {
         
         List<Map<String, Object>> escolhas = converterJsonParaLista(respostaIA);
 
+        System.out.println("ESCOLHAS: " + escolhas);
+
         for (Map<String, Object> escolha : escolhas) {
             Long receitaId = Long.valueOf(escolha.get("receitaId").toString());
             String dia = escolha.get("dia").toString();

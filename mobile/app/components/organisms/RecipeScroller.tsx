@@ -24,6 +24,8 @@ const Title = sc.Text`
   color: ${({ theme }) => theme.colors.textPrimary};
   font-size: 30px;
   font-weight: 800;
+  line-height: 36px;
+  padding-bottom: 10px;
 `;
 
 const Horizontal = sc.ScrollView`

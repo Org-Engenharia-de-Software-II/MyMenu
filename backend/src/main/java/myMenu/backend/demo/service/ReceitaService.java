@@ -35,7 +35,9 @@ public class ReceitaService {
 
     public List<Receita> buscarPriorizandoGeladeira(Long usuarioId) {     
         Usuario usuario = buscarUsuarioOuFalhar(usuarioId);
-        List<Receita> todasReceitas = receitaRepository.findAll();
+        List<Receita> todasReceitas = receitaRepository.findAll().stream()
+                .filter(receita -> receita.atendeRestricoesAlimentares(usuario.getRestricoes(), usuario.getIngredientesEvitados()))
+                .collect(Collectors.toList());
         ordenarPorMatchGeladeira(todasReceitas, usuario.getGeladeira());
         
         return todasReceitas;
@@ -43,13 +45,14 @@ public class ReceitaService {
 
     public List<Receita> buscarCandidatasParaCardapio(Usuario usuario) {
         List<Receita> todas = receitaRepository.findAll();
-
+        System.out.println(todas.stream()
+                .filter(r -> r.atendeRestricoesAlimentares(usuario.getRestricoes(), usuario.getIngredientesEvitados())));
         return todas.stream()
                 .filter(r -> r.atendeRestricoesAlimentares(usuario.getRestricoes(), usuario.getIngredientesEvitados()))
-                .sorted((r1, r2) -> Long.compare(
-                    calcularMatchDeIngredientes(r2, usuario.getGeladeira()), 
-                    calcularMatchDeIngredientes(r1, usuario.getGeladeira())
-                ))
+                // .sorted((r1, r2) -> Long.compare(
+                //     calcularMatchDeIngredientes(r2, usuario.getGeladeira()), 
+                //     calcularMatchDeIngredientes(r1, usuario.getGeladeira())
+                // ))
                 
                 .limit(40)
                 .collect(Collectors.toList());

@@ -27,7 +27,7 @@ public class CardapioSemanal {
     @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
-    @OneToMany(mappedBy = "cardapio", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "cardapio", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<ItemCardapio> itensCardapio = new ArrayList<>();
 
     public void adicionarReceita(Receita receita, String dia, String refeicao) {

@@ -273,6 +273,7 @@ export function AppFlowScreen() {
     async function fetchCardapios() {
       try {
         const response = await fetch(`${resolveApiBaseUrl()}/usuarios/${userId}/cardapio`);
+        console.log("RESPONSE CARDAPIO", response)
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(errorText || 'Falha ao carregar cardápios.');
@@ -444,6 +445,7 @@ export function AppFlowScreen() {
               }
               const nextSession = { userId: Number(user.id), listId, name: user.nome ?? '' };
               setSession(nextSession);
+
               await syncShoppingList(nextSession);
               animateTo('dashboard');
             } catch (error) {
@@ -507,6 +509,7 @@ export function AppFlowScreen() {
           onOpenWeeklyMenu={() => {
             animateTo('weekly-menu');
           }}
+          name={session?.name ?? 'Usuário'}
         />
       );
     }
