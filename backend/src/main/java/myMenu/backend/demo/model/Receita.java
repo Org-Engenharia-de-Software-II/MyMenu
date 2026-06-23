@@ -89,7 +89,8 @@ public class Receita {
                 descLower.contains("atum") || descLower.contains("tilápia") || descLower.contains("tilapi") ||
                 descLower.contains("salmão") || descLower.contains("salmon") || descLower.contains("peru") ||
                 descLower.contains("bacon") || descLower.contains("presunto") || descLower.contains("bacalhau") ||
-                descLower.contains("galinha") || descLower.contains("caldo de")) {
+                descLower.contains("galinha") || descLower.contains("caldo de") || descLower.contains("patinho") ||
+                descLower.contains("bife") || descLower.contains("bolonhesa")) {
                 return true;
             }
         }
@@ -102,7 +103,8 @@ public class Receita {
                 instrLower.contains("atum") || instrLower.contains("tilápia") || instrLower.contains("tilapi") ||
                 instrLower.contains("salmão") || instrLower.contains("salmon") || instrLower.contains("peru") ||
                 instrLower.contains("bacon") || instrLower.contains("presunto") || instrLower.contains("bacalhau") ||
-                instrLower.contains("galinha") || instrLower.contains("caldo de")) {
+                instrLower.contains("galinha") || instrLower.contains("caldo de") || instrLower.contains("patinho") ||
+                instrLower.contains("bife") || instrLower.contains("bolonhesa") || instrLower.contains("moído")) {
                 return true;
             }
         }
